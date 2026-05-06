@@ -1,0 +1,27 @@
+# KODAN-HUB Security and Routing
+Options -Indexes
+
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    
+    # Redirect all requests to index.php
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteRule ^ index.php [L]
+</IfModule>
+
+# Protect sensitive files
+<FilesMatch "^\.|\.php$|config\.php|logs/.*">
+    # Only index.php should be directly accessible if needed, 
+    # but rewrite takes care of it.
+</FilesMatch>
+
+<Files "config.php">
+    Order Allow,Deny
+    Deny from all
+</Files>
+
+<Files "logs/*">
+    Order Allow,Deny
+    Deny from all
+</Files>
