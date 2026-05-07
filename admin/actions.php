@@ -287,16 +287,66 @@ try {
             exit;
             break;
 
-        case 'test_connection_ajax':
+        case 'get_consumption_stats_ajax':
             header('Content-Type: application/json');
-            $id = $_GET['id'] ?? 0;
-            $app = $db->query("SELECT * FROM apps WHERE id = ?", [$id])->fetch();
-            if ($app) {
-                $p = ["contents" => [["parts" => [["text" => "ping"]]]]];
-                echo json_encode(\Kodan\Services\GeminiProxy::generateContent($app['gemini_key'], 'gemma-3-4b-it', $p));
-            } else {
-                echo json_encode(['status' => 'error', 'message' => 'App not found']);
-            }
+            $page = max(1, intval($_GET['page'] ?? 1));
+            $limit = max(1, intval($_GET['limit'] ?? 15));
+            $offset = ($page - 1) * $limit;
+
+            $app_id = $_GET['app_id'] ?? '';
+            $model = $_GET['model'] ?? '';
+            $status = $_GET['status'] ?? '';
+            $date_from = $_GET['date_from'] ?? '';
+            $date_to = $_GET['date_to'] ?? '';
+
+            $where = ["1=1"];
+            $params = [];
+
+            if ($app_id !== '') { $where[] = "l.app_id = ?"; $params[] = $app_id; }
+            if ($model !== '') { $where[] = "l.model = ?"; $params[] = $model; }
+            if ($status !== '') { $where[] = "l.status = ?"; $params[] = $status; }
+            if ($date_from !== '') { $where[] = "l.timestamp >= ?"; $params[] = $date_from . ' 00:00:00'; }
+            if ($date_to !== '') { $where[] = "l.timestamp <= ?"; $params[] = $date_to . ' 23:59:59'; }
+
+            $whereStr = implode(" AND ", $where);
+
+            // 1. Obtener Totalizadores
+            $totals = $db->query("
+                SELECT 
+                    SUM(tokens_in + tokens_out) as total_tokens,
+                    COUNT(*) as total_requests,
+                    AVG(latency) as avg_latency,
+                    SUM(CASE WHEN status = 'success' THEN 1 ELSE 0 END) as total_success
+                FROM logs l WHERE $whereStr
+            ", $params)->fetch();
+
+            // 2. Obtener Listado Paginado
+            $total_rows = $db->query("SELECT COUNT(*) FROM logs l WHERE $whereStr", $params)->fetchColumn();
+            $data = $db->query("
+                SELECT l.*, a.name as app_name 
+                FROM logs l 
+                LEFT JOIN apps a ON l.app_id = a.id 
+                WHERE $whereStr 
+                ORDER BY l.timestamp DESC 
+                LIMIT ? OFFSET ?
+            ", array_merge($params, [$limit, $offset]))->fetchAll();
+
+            echo json_encode([
+                'status' => 'success',
+                'totals' => [
+                    'tokens' => number_format($totals['total_tokens'] ?: 0),
+                    'requests' => number_format($totals['total_requests'] ?: 0),
+                    'latency' => round($totals['avg_latency'] ?: 0, 3) . 's',
+                    'efficiency' => $totals['total_requests'] > 0 ? round(($totals['total_success'] / $totals['total_requests']) * 100, 1) . '%' : '0%'
+                ],
+                'data' => $data,
+                'pagination' => [
+                    'page' => $page,
+                    'limit' => $limit,
+                    'total' => intval($total_rows),
+                    'total_pages' => ceil($total_rows / $limit)
+                ]
+            ]);
             exit;
             break;
     }

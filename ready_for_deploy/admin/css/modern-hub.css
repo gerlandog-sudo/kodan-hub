@@ -480,3 +480,15 @@ tbody tr:hover td {
 .limit-selector:focus {
     border-color: var(--mint-neon);
 }
+
+/* Forzar visibilidad de icono de calendario en Dark Mode */
+input[type="date"]::-webkit-calendar-picker-indicator {
+    filter: invert(1) brightness(1.5) sepia(100%) saturate(10000%) hue-rotate(100deg);
+    cursor: pointer;
+    opacity: 0.8;
+}
+
+input[type="date"]::-webkit-calendar-picker-indicator:hover {
+    opacity: 1;
+    transform: scale(1.1);
+}

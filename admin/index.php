@@ -42,7 +42,7 @@ try {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>KODAN-HUB | Neural Control</title>
-    <link rel="stylesheet" href="css/modern-hub.css?v=1.1.3">
+    <link rel="stylesheet" href="css/modern-hub.css?v=1.1.5">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
 </head>
@@ -90,6 +90,12 @@ try {
                             <span>Asignación IA</span>
                         </a>
                     </li>
+                    <li>
+                        <a href="javascript:void(0)" class="nav-link" onclick="showTab('stats-tab', this)" id="nav-stats">
+                            <i data-lucide="bar-chart-2"></i>
+                            <span>Estadísticas</span>
+                        </a>
+                    </li>
                 </ul>
             </nav>
 
@@ -109,7 +115,7 @@ try {
         <main class="content">
             <!-- Global Stats Widgets -->
             <div class="stats-grid">
-                <div class="stat-card">
+                <div class="stat-card" style="cursor: pointer; border-color: var(--mint-neon);" onclick="document.getElementById('nav-stats').click()">
                     <h3>Tokens Totales</h3>
                     <div class="stat-value" id="stat-tokens"><?php echo number_format($totalTokens); ?></div>
                     <i data-lucide="zap"></i>
@@ -233,6 +239,76 @@ try {
                     <p style="padding: 40px; text-align:center; color: var(--text-muted);">Cargando mapas de servicio...</p>
                 </div>
                 <div id="services-pagination" class="pagination-container" style="display:none; border-top:none; background:none;"></div>
+            </div>
+
+            <!-- SECCIÓN: ANALÍTICA NEURAL -->
+            <div id="stats-tab" class="tab-content">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+                    <h2 class="section-title">ANALÍTICA <span>NEURAL</span></h2>
+                    <div style="display: flex; gap: 10px;">
+                        <button class="btn-outline" onclick="loadConsumptionStats(1)" title="Refrescar Analítica">
+                            <i data-lucide="refresh-cw" style="width:14px;"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Filtros -->
+                <div class="glass-container" style="margin-bottom: 2rem; padding: 1.5rem;">
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px; align-items: end;">
+                        <div class="form-group" style="margin:0;">
+                            <label style="font-size: 0.65rem;">Aplicación</label>
+                            <select id="filter-app" class="limit-selector" style="width:100%; height:40px;">
+                                <option value="">Todas</option>
+                                <?php foreach ($apps as $app): ?>
+                                    <option value="<?php echo $app['id']; ?>"><?php echo htmlspecialchars($app['name']); ?></option>
+                                <?php endforeach; ?>
+                            </select>
+                        </div>
+                        <div class="form-group" style="margin:0;">
+                            <label style="font-size: 0.65rem;">Estado</label>
+                            <select id="filter-status" class="limit-selector" style="width:100%; height:40px;">
+                                <option value="">Todos</option>
+                                <option value="success">Éxitos</option>
+                                <option value="error">Errores</option>
+                            </select>
+                        </div>
+                        <div class="form-group" style="margin:0;">
+                            <label style="font-size: 0.65rem;">Desde</label>
+                            <input type="date" id="filter-from" class="limit-selector" style="width:100%; height:40px;">
+                        </div>
+                        <div class="form-group" style="margin:0;">
+                            <label style="font-size: 0.65rem;">Hasta</label>
+                            <input type="date" id="filter-to" class="limit-selector" style="width:100%; height:40px;">
+                        </div>
+                        <button class="btn-neural" style="height:40px;" onclick="loadConsumptionStats(1)">FILTRAR</button>
+                    </div>
+                </div>
+
+                <!-- Totalizadores Dinámicos -->
+                <div class="stats-grid" style="grid-template-columns: repeat(4, 1fr); margin-bottom: 2rem;">
+                    <div class="stat-card" style="padding: 1.5rem; background: rgba(0,255,194,0.03);">
+                        <h3 style="font-size: 0.65rem;">Tokens Filtrados</h3>
+                        <div class="stat-value" id="agg-tokens" style="font-size: 1.2rem;">0</div>
+                    </div>
+                    <div class="stat-card" style="padding: 1.5rem; background: rgba(255,255,255,0.02);">
+                        <h3 style="font-size: 0.65rem;">Peticiones Totales</h3>
+                        <div class="stat-value" id="agg-requests" style="font-size: 1.2rem;">0</div>
+                    </div>
+                    <div class="stat-card" style="padding: 1.5rem; background: rgba(255,255,255,0.02);">
+                        <h3 style="font-size: 0.65rem;">Latencia Media</h3>
+                        <div class="stat-value" id="agg-latency" style="font-size: 1.2rem;">0s</div>
+                    </div>
+                    <div class="stat-card" style="padding: 1.5rem; background: rgba(0,255,194,0.03);">
+                        <h3 style="font-size: 0.65rem;">Eficiencia</h3>
+                        <div class="stat-value" id="agg-efficiency" style="font-size: 1.2rem;">0%</div>
+                    </div>
+                </div>
+
+                <!-- Grilla de Detalle -->
+                <div class="glass-container" id="stats-list-container" style="padding: 0;">
+                    <p style="padding: 40px; text-align:center; color: var(--text-muted);">Configure filtros para visualizar analítica...</p>
+                </div>
+                <div id="stats-pagination" class="pagination-container" style="display:none; border-top:none; background:none;"></div>
             </div>
         </main>
     </div>
@@ -403,6 +479,71 @@ try {
             btn.classList.add('active');
             if (tabId === 'catalog-tab') loadCatalog();
             if (tabId === 'services-tab') loadServices();
+            if (tabId === 'stats-tab') loadConsumptionStats();
+        }
+
+        async function loadConsumptionStats(page = 1) {
+            const container = document.getElementById('stats-list-container');
+            const appId = document.getElementById('filter-app').value;
+            const status = document.getElementById('filter-status').value;
+            const from = document.getElementById('filter-from').value;
+            const to = document.getElementById('filter-to').value;
+
+            container.innerHTML = '<p style="padding: 40px; text-align:center; color: var(--text-muted);">Procesando analítica...</p>';
+
+            try {
+                const url = `actions.php?action=get_consumption_stats_ajax&page=${page}&app_id=${appId}&status=${status}&date_from=${from}&date_to=${to}`;
+                const r = await fetch(url);
+                const d = await r.json();
+
+                if (d.status === 'success') {
+                    // Actualizar Totalizadores
+                    document.getElementById('agg-tokens').innerText = d.totals.tokens;
+                    document.getElementById('agg-requests').innerText = d.totals.requests;
+                    document.getElementById('agg-latency').innerText = d.totals.latency;
+                    document.getElementById('agg-efficiency').innerText = d.totals.efficiency;
+
+                    if (d.data.length === 0) {
+                        container.innerHTML = '<p style="padding: 40px; text-align:center; color: var(--text-muted);">No hay registros para los filtros aplicados.</p>';
+                        document.getElementById('stats-pagination').style.display = 'none';
+                        return;
+                    }
+
+                    container.innerHTML = `
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>FECHA</th>
+                                    <th>APLICACIÓN</th>
+                                    <th>MODELO</th>
+                                    <th style="text-align:right;">TOKENS</th>
+                                    <th style="text-align:right;">LATENCIA</th>
+                                    <th style="text-align:center;">ESTADO</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${d.data.map(l => `
+                                    <tr>
+                                        <td><small>${l.timestamp}</small></td>
+                                        <td><strong>${l.app_name || 'Desconocida'}</strong></td>
+                                        <td><code style="font-size:0.7rem;">${l.model}</code></td>
+                                        <td style="text-align:right;">${(parseInt(l.tokens_in) + parseInt(l.tokens_out)).toLocaleString()}</td>
+                                        <td style="text-align:right;">${l.latency}s</td>
+                                        <td style="text-align:center;">
+                                            <span class="badge ${l.status === 'success' ? 'badge-mint' : 'badge-error'}">${l.status.toUpperCase()}</span>
+                                        </td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    `;
+
+                    renderPagination('stats-pagination', d.pagination, loadConsumptionStats);
+                    lucide.createIcons();
+                }
+            } catch (e) {
+                container.innerHTML = '<p style="padding: 40px; text-align:center; color: #ff4d4d;">Error al cargar analítica.</p>';
+            }
         }
 
         async function loadCatalog(page = 1) {
