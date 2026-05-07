@@ -68,7 +68,7 @@ try {
 
     // 4. Catálogo de Servicios
     $services = $db->query("
-        SELECT s.*, c.protocol, c.identifier, c.endpoint 
+        SELECT s.*, c.protocol, c.identifier, c.endpoint, c.provider 
         FROM app_services s 
         JOIN ai_catalog c ON s.catalog_id = c.id 
         WHERE s.app_id = ? AND s.is_active = 1 
@@ -94,8 +94,18 @@ try {
             $tokens = LogService::extractTokens($result['data'], $service['protocol']);
             LogService::save($app['id'], $service['identifier'], $tokens[0], $tokens[1], $latency, 'success');
             
-            $result['hub_model'] = $service['identifier'];
-            echo json_encode($result);
+            $finalResponse = [
+                'status' => 'success',
+                'response' => $result['response'] ?? '',
+                'usage' => [
+                    'prompt_tokens' => $tokens[0],
+                    'completion_tokens' => $tokens[1],
+                    'total_tokens' => $tokens[0] + $tokens[1]
+                ],
+                'hub_model' => $service['identifier'],
+                'provider' => $service['provider'] ?? 'Unknown'
+            ];
+            echo json_encode($finalResponse);
             exit;
         } else {
             LogService::save($app['id'], $service['identifier'], 0, 0, $latency, 'error');

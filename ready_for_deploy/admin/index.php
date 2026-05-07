@@ -417,7 +417,11 @@ try {
                 
                 <div class="form-group">
                     <label>Prioridad (1 = Principal)</label>
-                    <input type="number" name="priority" value="1">
+                    <div style="position: relative; display: flex; align-items: center;">
+                        <button type="button" onclick="this.nextElementSibling.stepDown()" style="position: absolute; left: 10px; background: transparent; border: none; color: var(--mint-neon); cursor: pointer; padding: 5px;"><i data-lucide="chevron-down" style="width:16px;"></i></button>
+                        <input type="number" name="priority" value="1" style="width: 100%; padding: 1rem 3rem; background: #050505; border: 1px solid var(--glass-border); color: var(--mint-neon); border-radius: 10px; font-weight: 800; font-size: 1.1rem;">
+                        <button type="button" onclick="this.previousElementSibling.stepUp()" style="position: absolute; right: 10px; background: transparent; border: none; color: var(--mint-neon); cursor: pointer; padding: 5px;"><i data-lucide="chevron-up" style="width:16px;"></i></button>
+                    </div>
                 </div>
 
                 <div style="display: flex; gap: 10px; margin-top: 2rem;">
@@ -442,28 +446,45 @@ try {
         </div>
     </div>
 
-    <div id="errorsModal" class="modal-overlay">
-        <div class="modal-content" style="max-width: 900px; max-height: 80vh; overflow-y: auto;">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
-                <h3 style="font-weight: 700; color: #ff4d4d;">Registro de Fallos Críticos</h3>
-                <button class="btn-outline" onclick="hideModal('errorsModal')" style="padding: 5px 15px;">Cerrar</button>
+    <div id="testResultModal" class="modal-overlay">
+        <div class="modal-content" style="max-width: 850px; padding: 2rem;">
+            <div class="diagnostic-header">
+                <div style="display: flex; align-items: center; gap: 12px;">
+                    <div style="width: 10px; height: 10px; background: var(--mint-neon); border-radius: 50%; box-shadow: 0 0 10px var(--mint-neon);"></div>
+                    <h3 style="margin: 0; font-size: 1.1rem; font-weight: 700; letter-spacing: -0.5px;">DIAGNÓSTICO NEURAL V3.2</h3>
+                </div>
+                <div style="display: flex; gap: 8px;">
+                    <div id="test-status-pill" class="diag-pill">-</div>
+                    <div id="test-latency-pill" class="diag-pill" style="background: rgba(255,255,255,0.05); color: var(--text-muted);">-</div>
+                </div>
             </div>
-            <div class="glass-container" style="padding: 0; overflow: hidden;">
-                <table style="font-size: 0.8rem;">
-                    <thead>
-                        <tr>
-                            <th>FECHA</th>
-                            <th>APLICACIÓN</th>
-                            <th>MODELO</th>
-                            <th>LATENCIA</th>
-                            <th>ESTADO</th>
-                        </tr>
-                    </thead>
-                    <tbody id="errorsTableBody">
-                        <!-- Dinámico -->
-                    </tbody>
-                </table>
-                <div id="errors-pagination" class="pagination-container" style="display:none;"></div>
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px;">
+                <div class="trace-container">
+                    <div class="trace-header">
+                        <span>TRAZA DE SALIDA (REQUEST)</span>
+                        <i data-lucide="upload-cloud" style="width:12px;"></i>
+                    </div>
+                    <div id="test-request" class="trace-body">-</div>
+                </div>
+                <div class="trace-container">
+                    <div class="trace-header">
+                        <span>RESPUESTA CRUDA (API_RAW)</span>
+                        <i data-lucide="download-cloud" style="width:12px;"></i>
+                    </div>
+                    <div id="test-response" class="trace-body">-</div>
+                </div>
+            </div>
+
+            <div class="terminal-extracted">
+                <div id="test-extracted">Esperando flujo de datos...</div>
+            </div>
+
+            <div style="margin-top: 2rem; display: flex; justify-content: space-between; align-items: center;">
+                <div style="font-size: 0.65rem; color: var(--text-muted); font-family: monospace;">
+                    ENDPOINT: <span id="test-endpoint-display" style="color: #666;">-</span>
+                </div>
+                <button class="btn-neural" style="padding: 10px 30px;" onclick="hideModal('testResultModal')">CERRAR DIAGNÓSTICO</button>
             </div>
         </div>
     </div>
@@ -546,9 +567,20 @@ try {
             }
         }
 
+        async function populateCatalogSelect() {
+            const select = document.getElementById('catalogSelect');
+            if (!select) return;
+            try {
+                const r = await fetch(`actions.php?action=get_catalog_ajax&page=1&limit=100`);
+                const d = await r.json();
+                if (d.status === 'success') {
+                    select.innerHTML = d.data.map(m => `<option value="${m.id}">${m.provider} - ${m.name}</option>`).join('');
+                }
+            } catch (e) {}
+        }
+
         async function loadCatalog(page = 1) {
             const container = document.getElementById('catalog-list-container');
-            const select = document.getElementById('catalogSelect');
             if (!container) return;
             try {
                 const r = await fetch(`actions.php?action=get_catalog_ajax&page=${page}&limit=10`);
@@ -578,7 +610,6 @@ try {
                             </tbody>
                         </table>
                     `;
-                    if (select) select.innerHTML = d.data.map(m => `<option value="${m.id}">${m.provider} - ${m.name}</option>`).join('');
                     
                     d.pagination.data_count = d.data.length;
                     renderPagination('catalog-pagination', d.pagination, loadCatalog);
@@ -638,11 +669,17 @@ try {
                 const r = await fetch('actions.php?action=test_service_ajax&id=' + id);
                 const d = await r.json();
                 closeToast(loadingToast);
-                if (d.status === 'success') {
-                    showToast('Conexión Neural Exitosa: ' + (d.data?.choices?.[0]?.message?.content || 'PONG'), 'success');
-                } else {
-                    showToast('Error en la respuesta: ' + d.message, 'error');
-                }
+                
+                document.getElementById('test-status-pill').innerText = d.status.toUpperCase();
+                document.getElementById('test-status-pill').className = 'diag-pill ' + (d.status === 'success' ? 'success' : 'error');
+                document.getElementById('test-latency-pill').innerText = d.latency ? d.latency + ' LATENCY' : '-';
+                document.getElementById('test-endpoint-display').innerText = d.debug_endpoint || '-';
+                document.getElementById('test-request').innerText = JSON.stringify(d.debug_request, null, 2);
+                document.getElementById('test-response').innerText = JSON.stringify(d.debug_response, null, 2);
+                document.getElementById('test-extracted').innerText = d.response || '(Vacío)';
+                
+                showModal('testResultModal');
+                if (typeof lucide !== 'undefined') lucide.createIcons();
             } catch (e) {
                 closeToast(loadingToast);
                 showToast('Fallo crítico en la infraestructura de red', 'error');
@@ -664,7 +701,10 @@ try {
             showModal('addCatalogModal');
         }
 
-        function openEditService(id, catalogId, apiKey, priority) {
+        async function openEditService(id, catalogId, apiKey, priority) {
+            // Asegurar que el catálogo esté cargado antes de seleccionar
+            await populateCatalogSelect();
+            
             document.querySelector('#addServiceModal [name="action"]').value = 'edit_app_service';
             const modal = document.getElementById('addServiceModal');
             modal.querySelector('h3').innerText = 'EDITAR ASIGNACIÓN DE IA';
@@ -729,7 +769,12 @@ try {
         function rotateToken(id) { if(confirm('¿Rotar token de seguridad?')) window.location.href = 'actions.php?action=rotate_token&id=' + id; }
         function toggleStatus(id) { window.location.href = 'actions.php?action=toggle_status&id=' + id; }
         function confirmDelete(id, name) { document.getElementById('deleteAppName').innerText = name; document.getElementById('btnConfirmDelete').onclick = function() { window.location.href = 'actions.php?action=delete_app&id=' + id; }; showModal('deleteModal'); }
-        window.onload = function() { refreshStats(); setInterval(refreshStats, 30000); lucide.createIcons(); };
+        window.onload = function() { 
+            refreshStats(); 
+            populateCatalogSelect(); // Cargar combo de IAs al inicio
+            setInterval(refreshStats, 30000); 
+            lucide.createIcons(); 
+        };
     </script>
 </body>
 </html>

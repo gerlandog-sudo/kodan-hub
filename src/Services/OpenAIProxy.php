@@ -48,6 +48,11 @@ class OpenAIProxy {
             }
         }
 
+        // Si es un prompt simple (string)
+        if (empty($messages) && is_string($payload)) {
+            $messages[] = ["role" => "user", "content" => $payload];
+        }
+
         // Si después de todo sigue vacío, inyectamos un mensaje de error para evitar el 400 de NVIDIA
         if (empty($messages)) {
             $messages[] = ["role" => "user", "content" => "Hello (System Auto-Ping)"];
@@ -82,6 +87,9 @@ class OpenAIProxy {
 
         $data = json_decode($response, true);
         
+        // Extracción de texto estandarizada
+        $extractedText = $data['choices'][0]['message']['content'] ?? ($data['choices'][0]['text'] ?? '');
+
         // Log para depuración
         $logDir = dirname(__DIR__, 2) . '/logs';
         if (!is_dir($logDir)) @mkdir($logDir, 0777, true);
@@ -91,8 +99,9 @@ class OpenAIProxy {
         @file_put_contents($logFile, $logMsg, FILE_APPEND);
 
         return [
-            'status' => ($httpCode === 200) ? 'success' : 'error',
+            'status' => ($httpCode === 200 && !empty($extractedText)) ? 'success' : 'error',
             'http_code' => $httpCode,
+            'response' => $extractedText,
             'data' => $data,
             'message' => $data['error']['message'] ?? ($httpCode === 200 ? 'OK' : 'OpenAI API Error ' . $httpCode)
         ];

@@ -206,11 +206,11 @@ try {
 
             if ($service) {
                 $startTime = microtime(true);
-                $p = ["contents" => [["parts" => [["text" => "respond only with 'pong'"]]]]];
+                // Usamos un formato genérico para probar la traducción interna
+                $p = ["messages" => [["role" => "user", "content" => "respond only with 'pong'"]]];
                 
                 if ($service['protocol'] === 'openai-v1') {
-                    $mapped = ["messages" => [["role" => "user", "content" => "respond only with 'pong'"]]];
-                    $res = \Kodan\Services\OpenAIProxy::generateContent($service['api_key'], $service['identifier'], $mapped, $service['endpoint']);
+                    $res = \Kodan\Services\OpenAIProxy::generateContent($service['api_key'], $service['identifier'], $p, $service['endpoint']);
                 } else {
                     $res = \Kodan\Services\GeminiProxy::generateContent($service['api_key'], $service['identifier'], $p, $service['endpoint']);
                 }
@@ -223,6 +223,12 @@ try {
                 } else {
                     LogService::save($service['app_id'], $service['identifier'], 0, 0, $latency, 'error');
                 }
+
+                // Inyectar info de debug para el modal del admin
+                $res['debug_request'] = $p;
+                $res['debug_endpoint'] = $service['endpoint'] . ($service['protocol'] === 'gemini-v1' ? $service['identifier'] : '');
+                $res['debug_response'] = $res['data'];
+                $res['latency'] = $latency . 's';
 
                 echo json_encode($res);
             } else {

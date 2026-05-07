@@ -398,6 +398,99 @@ tbody tr:hover td {
     animation: spin 1s linear infinite;
 }
 
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+/* Ocultar flechas nativas y aplicar estilo Antigravity */
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+input[type="number"] {
+    -moz-appearance: textfield;
+    text-align: center;
+    font-weight: 700;
+    color: var(--mint-neon) !important;
+    border-color: rgba(0, 255, 194, 0.3) !important;
+}
+
+/* Modal de Diagnóstico Neural (High-End) */
+.diagnostic-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-bottom: 1.5rem;
+    border-bottom: 1px solid var(--glass-border);
+    margin-bottom: 1.5rem;
+}
+
+.diag-pill {
+    padding: 4px 12px;
+    border-radius: 6px;
+    font-size: 0.65rem;
+    font-weight: 800;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+}
+
+.diag-pill.success { background: rgba(0, 255, 194, 0.1); color: var(--mint-neon); border: 1px solid rgba(0, 255, 194, 0.2); }
+.diag-pill.error { background: rgba(255, 77, 77, 0.1); color: #ff4d4d; border: 1px solid rgba(255, 77, 77, 0.2); }
+
+.trace-container {
+    background: #080808;
+    border: 1px solid var(--glass-border);
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+.trace-header {
+    background: rgba(255,255,255,0.02);
+    padding: 8px 15px;
+    font-size: 0.6rem;
+    font-weight: 700;
+    color: var(--text-muted);
+    border-bottom: 1px solid var(--glass-border);
+    display: flex;
+    justify-content: space-between;
+}
+
+.trace-body {
+    padding: 15px;
+    font-family: 'JetBrains Mono', 'Fira Code', monospace;
+    font-size: 0.7rem;
+    line-height: 1.4;
+    color: #d1d1d1;
+    white-space: pre-wrap;
+    max-height: 150px;
+    overflow-y: auto;
+}
+
+.terminal-extracted {
+    background: linear-gradient(to bottom, #0a0a0a, #050505);
+    border: 1px solid rgba(0, 255, 194, 0.15);
+    padding: 20px;
+    border-radius: 12px;
+    color: var(--mint-neon);
+    font-size: 0.95rem;
+    line-height: 1.6;
+    position: relative;
+}
+
+.terminal-extracted::before {
+    content: "AI_RESPONSE_STREAM";
+    position: absolute;
+    top: -8px;
+    left: 15px;
+    background: var(--bg-onyx);
+    padding: 0 8px;
+    font-size: 0.55rem;
+    font-weight: 800;
+    color: var(--text-muted);
+}
+
 /* Paginación TimeTracker Style */
 .pagination-container {
     display: flex;

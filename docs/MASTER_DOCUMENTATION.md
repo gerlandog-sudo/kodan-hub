@@ -80,15 +80,61 @@ Para evitar estados inconsistentes, el sistema utiliza un prefijo de versión en
 
 ---
 
-## 4. Gestión de Seguridad
-- **Ocultamiento de Keys**: Ninguna aplicación cliente posee la `GEMINI_API_KEY`.
+## 4. IA Agnostic Gateway (Integración AI v3.2)
+Desde la versión 3.2, KODAN-HUB actúa como un orquestador agnóstico de modelos de lenguaje, permitiendo el intercambio caliente de proveedores (Google Gemini, OpenAI, NVIDIA, etc.) sin modificar las aplicaciones cliente.
+
+### 4.1 Formato de Pedido Universal
+Las aplicaciones deben enviar un payload genérico. El HUB se encarga de traducirlo al protocolo específico del proveedor configurado.
+
+**Endpoint:** `POST /index.php`  
+**Headers:** `X-KODAN-TOKEN: [Token de la App]`
+
+#### Payload (Action: ai)
+```json
+{
+  "action": "ai",
+  "payload": {
+    "messages": [
+      { "role": "user", "content": "Tu prompt aquí" }
+    ],
+    "temperature": 0.7,
+    "max_tokens": 4096
+  }
+}
+```
+*Nota: También se acepta el formato nativo de Gemini (`contents`) o un string simple.*
+
+### 4.2 Respuesta Normalizada (Kodan Standard)
+Sin importar qué IA responda, el HUB siempre entregará esta estructura limpia:
+
+```json
+{
+  "status": "success",
+  "response": "Texto generado por la IA",
+  "usage": {
+    "prompt_tokens": 120,
+    "completion_tokens": 50,
+    "total_tokens": 170
+  },
+  "hub_model": "gemini-1.5-flash",
+  "provider": "Google"
+}
+```
+
+### 4.3 Mecanismo de Fallback
+Si el servicio de prioridad 1 falla, el HUB automáticamente re-intenta con el siguiente servicio configurado en la tabla `app_services`, re-formateando el prompt al vuelo para el nuevo protocolo.
+
+---
+
+## 5. Gestión de Seguridad
+- **Ocultamiento de Keys**: Ninguna aplicación cliente posee las API Keys de los proveedores.
 - **Handshake v2.0**: Registro automático de dispositivos nuevos en estado `pending`.
 - **Mantenimiento Global**: Posibilidad de pausar todas las apps desde una sola bandera en el HUB.
 
 ---
 
-## 5. Instrucciones de Instalación y Migración
+## 6. Instrucciones de Instalación y Migración
 1.  **Instalación Base**: Subir archivos al servidor.
 2.  **Base de Datos**: Ejecutar `setup_db.php`.
-3.  **Migraciones de Idioma**: Ejecutar `migration_v3.php` para crear la tabla de `translations`.
-4.  **Configuración de App**: Asegurarse de que el `APP_ID` en la aplicación móvil coincida con el registro del HUB.
+3.  **Migración Agnostic**: Ejecutar `migration_v6_agnostic_hub.php` para habilitar el catálogo global y prioridades.
+4.  **Configuración de App**: Vincular modelos del catálogo a la aplicación desde el panel administrativo.

@@ -1,6 +1,9 @@
-# Protocolo de Despliegue de Aplicaciones (Agnóstico v3.0)
+# Protocolo de Despliegue de Aplicaciones (Agnóstico v3.2)
 
 Este protocolo debe seguirse estrictamente para integrar cualquier aplicación (Web o Mobile) con el KODAN-HUB.
+
+> [!IMPORTANT]
+> **El Hub NO requiere el formato Gemini (`contents`).** El formato universal es `messages`. El Hub lo traduce internamente al protocolo que corresponda.
 
 ## Paso 1: Registro de la Aplicación en el Hub
 1.  **Handshake Inicial**: La aplicación debe intentar una llamada al Hub con las cabeceras `X-KODAN-APP-ID` y `X-KODAN-APP-NAME` (sin cuerpo POST).
@@ -17,16 +20,47 @@ Este protocolo debe seguirse estrictamente para integrar cualquier aplicación (
 La aplicación NO debe contener URLs de Google o NVIDIA. Solo debe tener una constante:
 `BASE_URL = "https://hub.pmaasglobal.com/"`
 
-Toda petición de IA debe seguir esta estructura de cabeceras:
-*   `X-KODAN-TOKEN`: El token obtenido en el Paso 1.
-*   `Content-Type`: `application/json`
-*   `Expect`: (Vacío, para evitar errores HTTP 100).
+**Formato de petición (ÚNICO, invariable):**
+```json
+{
+  "action": "ai",
+  "payload": {
+    "messages": [
+      { "role": "user", "content": "Tu prompt aquí" }
+    ],
+    "temperature": 0.7,
+    "max_tokens": 4096
+  }
+}
+```
+
+**Headers obligatorios:**
+```
+X-KODAN-TOKEN: KDN-XXXXXXXX
+Content-Type: application/json
+```
+
+**Respuesta que siempre devuelve el Hub (Kodan Standard):**
+```json
+{
+  "status": "success",
+  "response": "Texto generado por la IA",
+  "usage": {
+    "prompt_tokens": 120,
+    "completion_tokens": 50,
+    "total_tokens": 170
+  },
+  "hub_model": "gemini-1.5-flash",
+  "provider": "Google"
+}
+```
+La aplicación solo debe leer el campo `response`. Si `status` es `error`, leer el campo `message`.
 
 ## Paso 4: Lógica de Rotación de Tokens (Obligatorio)
 La App debe estar preparada para leer la cabecera `X-KODAN-NEW-TOKEN` en CUALQUIER respuesta del Hub. Si esta cabecera viene, la App debe actualizar su token local inmediatamente para no perder la conexión.
 
 ## Paso 5: Verificación
-Ejecutar el script de diagnóstico (`verify_hub_v3.php`) para confirmar el "PONG" de la IA antes de abrir el servicio a los usuarios.
+Usar el botón de **Test Neural** en el panel administrativo para confirmar el "PONG" de la IA antes de abrir el servicio a los usuarios.
 
 ---
-*Protocolo Estándar Antigravity - Mayo 2026*
+*Protocolo Estándar Antigravity — Versión 3.2 — Mayo 2026*
