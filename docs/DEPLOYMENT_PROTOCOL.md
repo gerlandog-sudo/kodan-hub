@@ -18,7 +18,7 @@ Este protocolo debe seguirse estrictamente para integrar cualquier aplicación (
 
 ## Paso 3: Implementación del AiService en la App
 La aplicación NO debe contener URLs de Google o NVIDIA. Solo debe tener una constante:
-`BASE_URL = "https://hub.pmaasglobal.com/"`
+`BASE_URL = "https://hub.kodan.software/"`
 
 **Formato de petición (ÚNICO, invariable):**
 ```json
