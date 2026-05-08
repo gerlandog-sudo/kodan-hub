@@ -42,7 +42,7 @@ class Mailer {
 
         $headers = "MIME-Version: 1.0" . "\r\n";
         $headers .= "Content-type:text/html;charset=UTF-8" . "\r\n";
-        $headers .= "From: KODAN-HUB <noreply@kodan-hub.com>" . "\r\n";
+        $headers .= "From: KODAN-HUB <noreply@kodan.software>" . "\r\n";
 
         // In a real environment, mail() must be configured or use PHPMailer
         // @mail($to, $subject, $message, $headers);

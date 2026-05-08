@@ -41,7 +41,8 @@ try {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>KODAN-HUB | Neural Control</title>
+    <title>kodanHUB | Neural Access</title>
+    <link rel="icon" type="image/svg+xml" href="https://kodan.software/kodan-terminal.svg">
     <link rel="stylesheet" href="css/modern-hub.css?v=1.1.5">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
