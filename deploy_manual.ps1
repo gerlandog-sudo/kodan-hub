@@ -26,8 +26,6 @@ foreach ($dir in $Dirs) {
     if (Test-Path $dir) { Copy-Item -Recurse $dir "ready_for_deploy/" }
 }
 
-# 4. Sello de Tiempo
-$Timestamp = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
-"<!-- Deployment: $Timestamp | Version: $NewVersion -->" | Out-File -Append -FilePath "ready_for_deploy/index.php"
-
+# 4. Finalizar
 Write-Host "Despliegue preparado en /ready_for_deploy" -ForegroundColor Green
+

@@ -12,20 +12,20 @@ use Kodan\Services\GeminiProxy;
 use Kodan\Services\OpenAIProxy;
 use Kodan\Services\LogService;
 
+// --- SEGURIDAD Y CORS ---
 header('Content-Type: application/json; charset=UTF-8');
-header("Access-Control-Allow-Origin: *");
+$origin = $_SERVER['HTTP_ORIGIN'] ?? '';
+if (preg_match('/^https?:\/\/(.*\.?kodan\.software)$/', $origin)) {
+    header("Access-Control-Allow-Origin: $origin");
+}
 header("Access-Control-Allow-Methods: POST, OPTIONS");
 header("Access-Control-Allow-Headers: Content-Type, X-KODAN-TOKEN, X-KODAN-APP-ID, X-KODAN-APP-NAME, Authorization");
+header('X-Content-Type-Options: nosniff');
+header('X-Frame-Options: DENY');
+header('Strict-Transport-Security: max-age=31536000; includeSubDomains');
+header("Content-Security-Policy: default-src 'self'; script-src 'self'; connect-src 'self' https://*.googleapis.com https://api.openai.com;");
 
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') { exit; }
-
-// --- OPTIMIZACIÓN LITESPEED: Comentamos el manejador estricto para evitar el 500 vacío ---
-/*
-set_error_handler(function($errno, $errstr, $errfile, $errline) {
-    if (!(error_reporting() & $errno)) return;
-    throw new \ErrorException($errstr, 0, $errno, $errfile, $errline);
-});
-*/
 
 try {
     $db = Database::getInstance();
@@ -42,7 +42,7 @@ try {
         $app = $db->query("SELECT * FROM apps WHERE app_id = ?", [trim($appId)])->fetch();
     }
 
-    // 2. Handshake Automático (Registro)
+    // 2. Handshake Automático (Registro) - RESTAURADO POR PETICIÓN
     if (!$app && !empty($appId)) {
         $inputJSON = file_get_contents('php://input');
         if (empty($inputJSON)) {
@@ -125,4 +125,6 @@ try {
         'file' => basename($e->getFile()),
         'line' => $e->getLine()
     ]);
+    exit;
 }
+
