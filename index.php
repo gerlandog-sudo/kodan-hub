@@ -19,10 +19,13 @@ header("Access-Control-Allow-Headers: Content-Type, X-KODAN-TOKEN, X-KODAN-APP-I
 
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') { exit; }
 
+// --- OPTIMIZACIÓN LITESPEED: Comentamos el manejador estricto para evitar el 500 vacío ---
+/*
 set_error_handler(function($errno, $errstr, $errfile, $errline) {
     if (!(error_reporting() & $errno)) return;
     throw new \ErrorException($errstr, 0, $errno, $errfile, $errline);
 });
+*/
 
 try {
     $db = Database::getInstance();

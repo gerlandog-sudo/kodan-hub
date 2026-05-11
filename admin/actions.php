@@ -24,6 +24,12 @@ function generateKodanToken($name) {
     return 'KDN-' . $prefix . '-' . strtoupper(substr(md5(uniqid()), 0, 6));
 }
 
+function redirectBack() {
+    $tab = $_REQUEST['redirect_tab'] ?? 'apps-tab';
+    header("Location: index.php?tab=$tab");
+    exit;
+}
+
 try {
     $db = \Kodan\Core\Database::getInstance();
     
@@ -39,8 +45,7 @@ try {
             foreach (['gemma-3-4b-it', 'gemini-2.0-flash', 'gemini-1.5-flash'] as $m) {
                 $db->query("INSERT INTO app_models (app_id, model_name) VALUES (?, ?)", [$id, $m]);
             }
-            header("Location: index.php");
-            exit;
+            redirectBack();
             break;
 
         case 'rotate_token':
@@ -50,8 +55,7 @@ try {
                 $newToken = generateKodanToken($app['name']);
                 $db->query("UPDATE apps SET old_token = ?, token = ? WHERE id = ?", [$app['token'], $newToken, $id]);
             }
-            header("Location: index.php");
-            exit;
+            redirectBack();
             break;
 
         case 'delete_app':
@@ -59,15 +63,13 @@ try {
             $db->query("DELETE FROM app_models WHERE app_id = ?", [$id]);
             $db->query("DELETE FROM logs WHERE app_id = ?", [$id]);
             $db->query("DELETE FROM apps WHERE id = ?", [$id]);
-            header("Location: index.php");
-            exit;
+            redirectBack();
             break;
 
         case 'toggle_status':
             $id = $_GET['id'] ?? 0;
             $db->query("UPDATE apps SET status = CASE WHEN status = 'active' THEN 'inactive' ELSE 'active' END WHERE id = ?", [$id]);
-            header("Location: index.php");
-            exit;
+            redirectBack();
             break;
 
         case 'edit_app':
@@ -75,8 +77,7 @@ try {
             $name = $_POST['name'] ?? '';
             $key = $_POST['gemini_key'] ?? '';
             $db->query("UPDATE apps SET name = ?, gemini_key = ? WHERE id = ?", [$name, $key, $id]);
-            header("Location: index.php");
-            exit;
+            redirectBack();
             break;
 
         case 'get_catalog_ajax':
@@ -139,8 +140,7 @@ try {
             
             $db->query("INSERT INTO ai_catalog (provider, name, identifier, protocol, endpoint) VALUES (?, ?, ?, ?, ?)", 
                 [$provider, $name, $identifier, $protocol, $endpoint]);
-            header("Location: index.php");
-            exit;
+            redirectBack();
             break;
 
         case 'add_app_service':
@@ -151,15 +151,13 @@ try {
             
             $db->query("INSERT INTO app_services (app_id, catalog_id, api_key, priority) VALUES (?, ?, ?, ?)", 
                 [$app_id, $catalog_id, $key, $priority]);
-            header("Location: index.php");
-            exit;
+            redirectBack();
             break;
 
         case 'delete_service':
             $id = $_GET['id'] ?? 0;
             $db->query("DELETE FROM app_services WHERE id = ?", [$id]);
-            header("Location: index.php");
-            exit;
+            redirectBack();
             break;
 
         case 'edit_catalog_model':
@@ -171,8 +169,7 @@ try {
             $endpoint = $_POST['endpoint'] ?? '';
             $db->query("UPDATE ai_catalog SET provider = ?, name = ?, identifier = ?, protocol = ?, endpoint = ? WHERE id = ?", 
                 [$provider, $name, $identifier, $protocol, $endpoint, $id]);
-            header("Location: index.php");
-            exit;
+            redirectBack();
             break;
 
         case 'edit_app_service':
@@ -182,15 +179,13 @@ try {
             $priority = $_POST['priority'] ?? 1;
             $db->query("UPDATE app_services SET catalog_id = ?, api_key = ?, priority = ? WHERE id = ?", 
                 [$catalog_id, $key, $priority, $id]);
-            header("Location: index.php");
-            exit;
+            redirectBack();
             break;
 
         case 'delete_catalog_model':
             $id = $_GET['id'] ?? 0;
             $db->query("DELETE FROM ai_catalog WHERE id = ?", [$id]);
-            header("Location: index.php");
-            exit;
+            redirectBack();
             break;
 
         case 'test_service_ajax':

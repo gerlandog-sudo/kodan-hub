@@ -17,6 +17,8 @@ try {
     $reqHour = $db->query("SELECT COUNT(*) FROM logs WHERE timestamp >= datetime('now', '-1 hour')")->fetchColumn() ?: 0;
     $reqMin = $db->query("SELECT COUNT(*) FROM logs WHERE timestamp >= datetime('now', '-1 minute')")->fetchColumn() ?: 0;
     $errorCount = $db->query("SELECT COUNT(*) FROM logs WHERE status = 'error'")->fetchColumn() ?: 0;
+    
+    $activeTab = $_GET['tab'] ?? 'apps-tab';
 
     // Listado de Apps con sus consumos (Consulta robusta con paginación)
     $appsPage = max(1, intval($_GET['p_page'] ?? 1));
@@ -73,9 +75,9 @@ try {
 
             <nav style="flex: 1;">
                 <ul>
-                    <li>
-                        <a href="javascript:void(0)" class="nav-link active" onclick="showTab('main-apps-section', this)">
-                            <i data-lucide="layout-grid"></i>
+                    <li class="nav-item">
+                        <a href="javascript:void(0)" class="nav-link active" onclick="showTab('apps-tab', this)" id="nav-apps">
+                            <i data-lucide="layers"></i>
                             <span>Aplicaciones</span>
                         </a>
                     </li>
@@ -144,7 +146,7 @@ try {
             </div>
 
             <!-- TAB SECTIONS -->
-            <div id="main-apps-section" class="tab-content active">
+            <div id="apps-tab" class="tab-content active">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
                     <h2 class="section-title">GESTIÓN DE <span>APLICACIONES</span></h2>
                     <button class="btn-neural" onclick="showModal('addAppModal')">
@@ -169,7 +171,7 @@ try {
                             <tr>
                                 <td>
                                     <div style="font-weight: 700; color: var(--text-titanium);"><?php echo htmlspecialchars($app['name']); ?></div>
-                                    <div style="font-size: 0.65rem; color: var(--text-muted);"><?php echo htmlspecialchars($app['app_identifier'] ?? 'INSTANCIA MANUAL'); ?></div>
+                                    <div style="font-size: 0.65rem; color: var(--text-muted);"><?php echo htmlspecialchars($app['app_id'] ?? 'INSTANCIA MANUAL'); ?></div>
                                 </td>
                                 <td>
                                     <code style="background: rgba(255,255,255,0.03); padding: 4px 8px; border-radius: 6px; font-size: 0.75rem; border: 1px solid var(--glass-border);">
@@ -337,6 +339,7 @@ try {
             <h3 style="margin-bottom: 1.5rem; font-weight: 700; color: var(--mint-neon);">Registrar Aplicación</h3>
             <form action="actions.php" method="POST">
                 <input type="hidden" name="action" value="add_app">
+                <input type="hidden" name="redirect_tab" value="apps-tab">
                 <div class="form-group">
                     <label>Nombre de la Aplicación</label>
                     <input type="text" name="name" placeholder="Ej: SmartCook" required>
@@ -358,6 +361,7 @@ try {
             <h3 style="margin-bottom: 1.5rem; font-weight: 700; color: var(--mint-neon);">Nuevo Modelo Global</h3>
             <form action="actions.php" method="POST">
                 <input type="hidden" name="action" value="add_catalog_model">
+                <input type="hidden" name="redirect_tab" value="catalog-tab">
                 <div class="form-group">
                     <label>Proveedor (ej: NVIDIA, GOOGLE)</label>
                     <input type="text" name="provider" required>
@@ -394,6 +398,7 @@ try {
             <h3 style="margin-bottom: 1.5rem; font-weight: 700; color: var(--mint-neon);">Vincular IA a Aplicación</h3>
             <form action="actions.php" method="POST">
                 <input type="hidden" name="action" value="add_app_service">
+                <input type="hidden" name="redirect_tab" value="services-tab">
                 
                 <div class="form-group">
                     <label>Aplicación Destino</label>
@@ -497,8 +502,18 @@ try {
         function showTab(tabId, btn) {
             document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
             document.querySelectorAll('.nav-link').forEach(b => b.classList.remove('active'));
-            document.getElementById(tabId).classList.add('active');
-            btn.classList.add('active');
+            const content = document.getElementById(tabId);
+            if (content) content.classList.add('active');
+            if (btn) btn.classList.add('active');
+            else {
+                // Si no hay botón (carga inicial), buscarlo por data-tab o similar
+                const navBtn = document.querySelector(`.nav-link[onclick*="'${tabId}'"]`);
+                if (navBtn) navBtn.classList.add('active');
+            }
+            
+            // Persistir en inputs ocultos de formularios
+            document.querySelectorAll('input[name="redirect_tab"]').forEach(i => i.value = tabId);
+
             if (tabId === 'catalog-tab') loadCatalog();
             if (tabId === 'services-tab') loadServices();
             if (tabId === 'stats-tab') loadConsumptionStats();
@@ -765,16 +780,25 @@ try {
             } catch (e) {}
         }
 
-        function deleteCatalog(id) { if(confirm('¿Purgar este modelo?')) window.location.href = 'actions.php?action=delete_catalog_model&id=' + id; }
-        function deleteService(id) { if(confirm('¿Desvincular servicio?')) window.location.href = 'actions.php?action=delete_service&id=' + id; }
-        function rotateToken(id) { if(confirm('¿Rotar token de seguridad?')) window.location.href = 'actions.php?action=rotate_token&id=' + id; }
-        function toggleStatus(id) { window.location.href = 'actions.php?action=toggle_status&id=' + id; }
-        function confirmDelete(id, name) { document.getElementById('deleteAppName').innerText = name; document.getElementById('btnConfirmDelete').onclick = function() { window.location.href = 'actions.php?action=delete_app&id=' + id; }; showModal('deleteModal'); }
+        function deleteCatalog(id) { if(confirm('¿Purgar este modelo?')) window.location.href = 'actions.php?action=delete_catalog_model&id=' + id + '&redirect_tab=catalog-tab'; }
+        function deleteService(id) { if(confirm('¿Desvincular servicio?')) window.location.href = 'actions.php?action=delete_service&id=' + id + '&redirect_tab=services-tab'; }
+        function rotateToken(id) { if(confirm('¿Rotar token de seguridad?')) window.location.href = 'actions.php?action=rotate_token&id=' + id + '&redirect_tab=apps-tab'; }
+        function toggleStatus(id) { window.location.href = 'actions.php?action=toggle_status&id=' + id + '&redirect_tab=apps-tab'; }
+        function confirmDelete(id, name) { 
+            document.getElementById('deleteAppName').innerText = name; 
+            document.getElementById('btnConfirmDelete').onclick = function() { window.location.href = 'actions.php?action=delete_app&id=' + id + '&redirect_tab=apps-tab'; }; 
+            showModal('deleteModal'); 
+        }
         window.onload = function() { 
             refreshStats(); 
             populateCatalogSelect(); // Cargar combo de IAs al inicio
             setInterval(refreshStats, 30000); 
             lucide.createIcons(); 
+            
+            // Activar pestaña desde URL si existe
+            const urlParams = new URLSearchParams(window.location.search);
+            const tab = urlParams.get('tab') || 'apps-tab';
+            showTab(tab);
         };
     </script>
 </body>
