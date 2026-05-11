@@ -1,14 +1,17 @@
 <?php
-namespace Kodan\Services;
 
-class GeminiProxy {
-    public static function generateContent($apiKey, $model, $payload, $endpoint = null) {
+namespace App\Services;
+
+class GeminiProxy
+{
+    public static function generateContent($apiKey, $model, $payload, $endpoint = null)
+    {
         $baseUrl = $endpoint ?: "https://generativelanguage.googleapis.com/v1/models/";
         $url = $baseUrl . $model . ":generateContent?key=" . trim($apiKey);
 
         // --- TRADUCCIÓN DE PROTOCOLO (OpenAI -> Gemini) ---
         $contents = $payload['contents'] ?? [];
-        
+
         // Si viene en formato OpenAI (messages), traducimos a Gemini (contents)
         if (empty($contents) && isset($payload['messages'])) {
             foreach ($payload['messages'] as $msg) {
@@ -64,7 +67,7 @@ class GeminiProxy {
         }
 
         $data = json_decode($response, true);
-        
+
         // Extracción de texto estandarizada
         $extractedText = $data['candidates'][0]['content']['parts'][0]['text'] ?? '';
 

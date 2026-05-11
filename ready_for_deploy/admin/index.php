@@ -1,12 +1,20 @@
 <?php 
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
+
+// Carga manual del core
+require_once __DIR__ . '/../src/Core/Medoo.php';
+require_once __DIR__ . '/../src/Core/Database.php';
+
 require_once 'auth.php'; 
 
 if (!isLoggedIn()) redirect('login.php');
 
+use App\Core\Database;
+
 try {
-    $db = \Kodan\Core\Database::getInstance();
+    $dbWrapper = Database::getInstance();
+    $db = $dbWrapper->getDB();
     
     // Estadísticas Globales
     $totalTokens = $db->query("SELECT SUM(tokens_in + tokens_out) FROM logs")->fetchColumn() ?: 0;
@@ -35,7 +43,7 @@ try {
         LIMIT $appsLimit OFFSET $appsOffset
     ")->fetchAll();
 } catch (\Exception $e) {
-    die("Error crítico de base de datos: " . $e->getMessage());
+    die("Error crítico de base de datos en administración: " . $e->getMessage());
 }
 ?>
 <!DOCTYPE html>

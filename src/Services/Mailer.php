@@ -1,6 +1,6 @@
 <?php
 
-namespace Kodan\Services;
+namespace App\Services;
 
 class Mailer {
     public static function sendTokenRotationAlert(string $to, string $appName, string $newToken) {

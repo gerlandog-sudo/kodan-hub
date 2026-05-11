@@ -1,16 +1,22 @@
 <?php
 /**
- * KODAN-HUB AI Gateway - Master Root File (v3.2 - Edición Final de Estabilidad)
+ * KODAN-HUB AI Gateway - Master Root File (v4.0 - Medoo Unified)
  */
+
+// Autoload manual si composer no está disponible o para asegurar carga de nuestras clases
+require_once __DIR__ . '/src/Core/Medoo.php';
 require_once __DIR__ . '/src/Core/Database.php';
 require_once __DIR__ . '/src/Services/GeminiProxy.php';
 require_once __DIR__ . '/src/Services/OpenAIProxy.php';
 require_once __DIR__ . '/src/Services/LogService.php';
 
-use Kodan\Core\Database;
-use Kodan\Services\GeminiProxy;
-use Kodan\Services\OpenAIProxy;
-use Kodan\Services\LogService;
+use App\Core\Database;
+use App\Services\GeminiProxy;
+use App\Services\OpenAIProxy;
+use App\Services\LogService;
+
+// Inicializar Base de Datos (Medoo)
+$db = Database::getInstance()->getDB();
 
 // --- SEGURIDAD Y CORS ---
 header('Content-Type: application/json; charset=UTF-8');
@@ -28,35 +34,43 @@ header("Content-Security-Policy: default-src 'self'; script-src 'self'; connect-
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') { exit; }
 
 try {
-    $db = Database::getInstance();
     $headers = function_exists('getallheaders') ? getallheaders() : [];
     
     $token = $headers['X-KODAN-TOKEN'] ?? $headers['x-kodan-token'] ?? $_SERVER['HTTP_X_KODAN_TOKEN'] ?? null;
     $appId = $headers['X-KODAN-APP-ID'] ?? $headers['x-kodan-app-id'] ?? $_SERVER['HTTP_X_KODAN_APP_ID'] ?? null;
 
-    // 1. Identificar Aplicación
+    // 1. Identificar Aplicación vía Medoo
     $app = null;
     if (!empty($token)) {
-        $app = $db->query("SELECT * FROM apps WHERE token = ?", [trim($token)])->fetch();
+        $results = $db->select('apps', '*', ['token' => trim($token)]);
+        $app = !empty($results) ? $results[0] : null;
     } elseif (!empty($appId)) {
-        $app = $db->query("SELECT * FROM apps WHERE app_id = ?", [trim($appId)])->fetch();
+        $results = $db->select('apps', '*', ['app_id' => trim($appId)]);
+        $app = !empty($results) ? $results[0] : null;
     }
 
-    // 2. Handshake Automático (Registro) - RESTAURADO POR PETICIÓN
+    // 2. Handshake Automático (Registro)
     if (!$app && !empty($appId)) {
         $inputJSON = file_get_contents('php://input');
         if (empty($inputJSON)) {
             $newToken = 'KDN-' . strtoupper(substr(md5(uniqid()), 0, 16));
             $appName = $headers['X-KODAN-APP-NAME'] ?? 'Nueva App';
-            $db->query("INSERT OR IGNORE INTO apps (name, app_id, token, status) VALUES (?, ?, ?, 'active')", [$appName, $appId, $newToken]);
+            
+            $db->insert('apps', [
+                'name' => $appName,
+                'app_id' => $appId,
+                'token' => $newToken,
+                'status' => 'active'
+            ]);
+
             echo json_encode(['status' => 'success', 'new_kodan_token' => $newToken, 'message' => 'Handshake OK']);
             exit;
         }
     }
 
-    if (!$app) {
+    if (!$app || $app['status'] !== 'active') {
         http_response_code(401);
-        die(json_encode(['status' => 'error', 'message' => 'App no autorizada o Token inválido.']));
+        die(json_encode(['status' => 'error', 'message' => 'App no autorizada, pausada o Token inválido.']));
     }
 
     // 3. Procesar IA
@@ -69,7 +83,7 @@ try {
         die(json_encode(['status' => 'error', 'message' => 'Acción IA no válida o sin contenido.']));
     }
 
-    // 4. Catálogo de Servicios
+    // 4. Catálogo de Servicios (Join Manual vía Medoo Syntax o Query Cruda Segura)
     $services = $db->query("
         SELECT s.*, c.protocol, c.identifier, c.endpoint, c.provider 
         FROM app_services s 
@@ -79,7 +93,7 @@ try {
     ", [$app['id']])->fetchAll();
 
     if (empty($services)) {
-        die(json_encode(['status' => 'error', 'message' => 'App sin servicios configurados en app_services.']));
+        die(json_encode(['status' => 'error', 'message' => 'App sin servicios configurados.']));
     }
 
     foreach ($services as $service) {
@@ -97,7 +111,7 @@ try {
             $tokens = LogService::extractTokens($result['data'], $service['protocol']);
             LogService::save($app['id'], $service['identifier'], $tokens[0], $tokens[1], $latency, 'success');
             
-            $finalResponse = [
+            echo json_encode([
                 'status' => 'success',
                 'response' => $result['response'] ?? '',
                 'usage' => [
@@ -107,8 +121,7 @@ try {
                 ],
                 'hub_model' => $service['identifier'],
                 'provider' => $service['provider'] ?? 'Unknown'
-            ];
-            echo json_encode($finalResponse);
+            ]);
             exit;
         } else {
             LogService::save($app['id'], $service['identifier'], 0, 0, $latency, 'error');
@@ -127,4 +140,3 @@ try {
     ]);
     exit;
 }
-

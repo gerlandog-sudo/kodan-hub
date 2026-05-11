@@ -1,5 +1,5 @@
 <?php
-namespace Kodan\Services;
+namespace App\Services;
 
 /**
  * OpenAIProxy - Manejador universal para protocolos OpenAI / NVIDIA / Groq

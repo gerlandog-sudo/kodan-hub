@@ -1,19 +1,23 @@
 <?php
-namespace Kodan\Services;
+namespace App\Services;
 
-use Kodan\Core\Database;
+use App\Core\Database;
 
 class LogService {
     /**
-     * Registra una transacción de IA en la base de datos
+     * Registra una transacción de IA usando Medoo
      */
     public static function save($appId, $model, $tokensIn, $tokensOut, $latency, $status = 'success') {
         try {
-            $db = Database::getInstance();
-            $db->query("
-                INSERT INTO logs (app_id, model, tokens_in, tokens_out, latency, status) 
-                VALUES (?, ?, ?, ?, ?, ?)
-            ", [$appId, $model, $tokensIn, $tokensOut, $latency, $status]);
+            $db = Database::getInstance()->getDB();
+            $db->insert('logs', [
+                'app_id' => $appId,
+                'model' => $model,
+                'tokens_in' => $tokensIn,
+                'tokens_out' => $tokensOut,
+                'latency' => $latency,
+                'status' => $status
+            ]);
             return true;
         } catch (\Exception $e) {
             error_log("KODAN LOG ERROR: " . $e->getMessage());
