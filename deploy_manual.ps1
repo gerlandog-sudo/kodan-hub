@@ -21,7 +21,7 @@ foreach ($file in $RootFiles) {
 }
 
 # 3. Copia de Directorios (EXCLUYENDO 'data' para no pisar la DB del servidor)
-$Dirs = @("admin", "src")
+$Dirs = @("admin", "src", "docs")
 foreach ($dir in $Dirs) {
     if (Test-Path $dir) { Copy-Item -Recurse $dir "ready_for_deploy/" }
 }

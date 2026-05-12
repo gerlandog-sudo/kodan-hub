@@ -1,6 +1,8 @@
 <?php
 namespace App\Core;
 
+require_once __DIR__ . '/Medoo.php';
+
 /**
  * Database Wrapper (Singleton)
  */
