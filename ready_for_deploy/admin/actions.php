@@ -31,9 +31,11 @@ function generateKodanToken($name) {
     return 'KDN-' . $prefix . '-' . strtoupper(substr(md5(uniqid()), 0, 6));
 }
 
-function redirectBack() {
+function redirectBack($error = null) {
     $tab = $_REQUEST['redirect_tab'] ?? 'apps-tab';
-    header("Location: index.php?tab=$tab");
+    $url = "index.php?tab=$tab";
+    if ($error) $url .= "&error=$error";
+    header("Location: $url");
     exit;
 }
 
@@ -68,13 +70,25 @@ try {
             redirectBack();
             break;
 
+        case 'update_app_name':
+            $id = $_POST['id'] ?? 0;
+            $name = $_POST['name'] ?? '';
+            if ($id && $name) {
+                $db->update('apps', ['name' => $name], ['id' => $id]);
+            }
+            redirectBack();
+            break;
+
         case 'delete_app':
             $id = $_GET['id'] ?? 0;
-            // Gracias a PRAGMA foreign_keys = ON y ON DELETE CASCADE (si se configuró), esto debería ser atómico.
-            // Por ahora lo hacemos manual para asegurar.
+            
+            // Ya no bloqueamos por logs, porque ahora archivamos (Soft Delete)
+            // Esto preserva la integridad referencial para las estadísticas
+            $db->update('apps', ['status' => 'archived'], ['id' => $id]);
+            
+            // Opcional: Desvincular servicios para liberar cuotas de IA asignadas
             $db->delete('app_services', ['app_id' => $id]);
-            $db->delete('logs', ['app_id' => $id]);
-            $db->delete('apps', ['id' => $id]);
+            
             redirectBack();
             break;
 

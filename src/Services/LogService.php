@@ -4,6 +4,8 @@ namespace App\Services;
 require_once __DIR__ . '/../Core/Database.php';
 require_once __DIR__ . '/../Core/Medoo.php';
 
+use App\Core\Database;
+
 class LogService {
     /**
      * Registra una transacción de IA usando Medoo

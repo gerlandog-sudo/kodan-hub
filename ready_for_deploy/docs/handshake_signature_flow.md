@@ -63,7 +63,8 @@ curl -X POST https://hub.kodan.software/ \
 }
 ```
 > [!IMPORTANT]
-> El cliente debe persistir este `new_kodan_token` localmente para todas sus peticiones futuras.
+> **Idempotencia y Multi-usuario:** El Hub permite que múltiples instancias de una misma aplicación (ej: todos los empleados de una empresa o todos los usuarios de una App global) obtengan el mismo token. Si una app ya existe con el `X-KODAN-APP-ID` proveído, el Hub devolverá el token existente en lugar de crear uno nuevo.
+> El cliente debe persistir este `new_kodan_token` localmente, pero puede volver a pedirlo realizando un handshake si lo pierde.
 
 ### Paso 2: Consumir el Servicio de IA
 Una vez obtenido el token, todas las peticiones deben incluirlo y enviar el payload con la acción `ai`.

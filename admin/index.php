@@ -27,19 +27,26 @@ try {
     $errorCount = $db->query("SELECT COUNT(*) FROM logs WHERE status = 'error'")->fetchColumn() ?: 0;
     
     $activeTab = $_GET['tab'] ?? 'apps-tab';
+    $showArchived = isset($_GET['show_archived']) && $_GET['show_archived'] == '1';
 
     // Listado de Apps con sus consumos (Consulta robusta con paginación)
     $appsPage = max(1, intval($_GET['p_page'] ?? 1));
     $appsLimit = 10;
     $appsOffset = ($appsPage - 1) * $appsLimit;
-    $totalApps = $db->query("SELECT COUNT(*) FROM apps")->fetchColumn();
+    
+    // Filtro de estado
+    $whereClause = $showArchived ? "1=1" : "status != 'archived'";
+    
+    $totalApps = $db->query("SELECT COUNT(*) FROM apps WHERE $whereClause")->fetchColumn();
     $totalPagesApps = ceil($totalApps / $appsLimit);
 
     $apps = $db->query("
         SELECT a.*, 
         (SELECT SUM(tokens_in + tokens_out) FROM logs WHERE app_id = a.id) as app_tokens,
         (SELECT COUNT(*) FROM logs WHERE app_id = a.id) as app_requests
-        FROM apps a ORDER BY a.created_at DESC
+        FROM apps a 
+        WHERE $whereClause
+        ORDER BY a.created_at DESC
         LIMIT $appsLimit OFFSET $appsOffset
     ")->fetchAll();
 } catch (\Exception $e) {
@@ -157,9 +164,21 @@ try {
             <div id="apps-tab" class="tab-content active">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
                     <h2 class="section-title">GESTIÓN DE <span>APLICACIONES</span></h2>
-                    <button class="btn-neural" onclick="showModal('addAppModal')">
-                        <i data-lucide="plus" style="width:14px; margin-right:5px; vertical-align:middle;"></i> NUEVA APP
-                    </button>
+                    
+                    <div style="display: flex; gap: 15px; align-items: center;">
+                        <!-- Linear Style Toggle -->
+                        <div class="toggle-container" title="Mostrar u ocultar aplicaciones archivadas">
+                            <span style="font-size: 0.65rem; font-weight: 700; color: var(--text-muted); margin-right: 10px;">VER ARCHIVADAS</span>
+                            <label class="switch">
+                                <input type="checkbox" id="toggleArchived" <?php echo $showArchived ? 'checked' : ''; ?> onchange="toggleArchivedView(this.checked)">
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+
+                        <button class="btn-neural" onclick="showModal('addAppModal')">
+                            <i data-lucide="plus" style="width:14px; margin-right:5px; vertical-align:middle;"></i> NUEVA APP
+                        </button>
+                    </div>
                 </div>
 
                 <div class="glass-container" style="padding: 0; overflow: hidden;">
@@ -176,7 +195,7 @@ try {
                         </thead>
                         <tbody>
                             <?php foreach ($apps as $app): ?>
-                            <tr>
+                            <tr class="<?php echo $app['status'] === 'archived' ? 'archived-row' : ''; ?>">
                                 <td>
                                     <div style="font-weight: 700; color: var(--text-titanium);"><?php echo htmlspecialchars($app['name']); ?></div>
                                     <div style="font-size: 0.65rem; color: var(--text-muted);"><?php echo htmlspecialchars($app['app_id'] ?? 'INSTANCIA MANUAL'); ?></div>
@@ -190,17 +209,26 @@ try {
                                 <td style="text-align: right; font-weight: 600;" id="stat-app-tokens-<?php echo $app['id']; ?>"><?php echo number_format($app['app_tokens'] ?: 0); ?></td>
                                 <td style="text-align: right; font-weight: 600;" id="stat-app-requests-<?php echo $app['id']; ?>"><?php echo number_format($app['app_requests'] ?: 0); ?></td>
                                 <td style="text-align: center;">
-                                    <span class="badge <?php echo $app['status'] === 'active' ? 'badge-mint' : 'badge-error'; ?>" onclick="toggleStatus('<?php echo $app['id']; ?>')" style="cursor:pointer;">
-                                        <?php echo strtoupper($app['status']); ?>
-                                    </span>
+                                    <?php if ($app['status'] === 'archived'): ?>
+                                        <span class="badge" style="background: rgba(255,255,255,0.05); color: #666; border: 1px dashed #444;">
+                                            ARCHIVADA
+                                        </span>
+                                    <?php else: ?>
+                                        <span class="badge <?php echo $app['status'] === 'active' ? 'badge-mint' : 'badge-error'; ?>" onclick="toggleStatus('<?php echo $app['id']; ?>')" style="cursor:pointer;">
+                                            <?php echo strtoupper($app['status']); ?>
+                                        </span>
+                                    <?php endif; ?>
                                 </td>
                                 <td style="text-align: right;">
                                     <div style="display: flex; gap: 8px; justify-content: flex-end;">
+                                        <button class="action-icon-btn" onclick="showEditAppModal('<?php echo $app['id']; ?>', '<?php echo htmlspecialchars($app['name']); ?>')" title="Editar Nombre">
+                                            <i data-lucide="edit-3" style="width:14px;"></i>
+                                        </button>
                                         <button class="action-icon-btn" onclick="rotateToken('<?php echo $app['id']; ?>')" title="Rotar Token de Seguridad">
                                             <i data-lucide="refresh-cw" style="width:14px;"></i>
                                         </button>
-                                        <button class="action-icon-btn danger" onclick="confirmDelete('<?php echo $app['id']; ?>', '<?php echo htmlspecialchars($app['name']); ?>')" title="Eliminar Aplicación">
-                                            <i data-lucide="trash-2" style="width:14px;"></i>
+                                        <button class="action-icon-btn danger" onclick="confirmDelete('<?php echo $app['id']; ?>', '<?php echo htmlspecialchars($app['name']); ?>')" title="Archivar Aplicación">
+                                            <i data-lucide="archive" style="width:14px;"></i>
                                         </button>
                                     </div>
                                 </td>
@@ -364,6 +392,24 @@ try {
         </div>
     </div>
 
+    <div id="editAppModal" class="modal-overlay">
+        <div class="modal-content">
+            <h2 class="section-title">EDITAR <span>APLICACIÓN</span></h2>
+            <form action="actions.php?action=update_app_name" method="POST">
+                <input type="hidden" name="id" id="editAppId">
+                <input type="hidden" name="redirect_tab" value="apps-tab">
+                <div class="form-group">
+                    <label>NOMBRE COMERCIAL</label>
+                    <input type="text" name="name" id="editAppName" required placeholder="Ej: SmartCook PRO">
+                </div>
+                <div style="display: flex; gap: 10px; margin-top: 2rem;">
+                    <button type="submit" class="btn-neural" style="flex: 1;">GUARDAR CAMBIOS</button>
+                    <button type="button" class="btn-outline" style="flex: 1;" onclick="hideModal('editAppModal')">CANCELAR</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <div id="addCatalogModal" class="modal-overlay">
         <div class="modal-content">
             <h3 style="margin-bottom: 1.5rem; font-weight: 700; color: var(--mint-neon);">Nuevo Modelo Global</h3>
@@ -448,13 +494,13 @@ try {
 
     <div id="deleteModal" class="modal-overlay">
         <div class="modal-content" style="text-align: center;">
-            <div style="color: #ff4d4d; margin-bottom: 1rem;">
+            <div id="deleteModalIcon" style="color: #ff4d4d; margin-bottom: 1rem;">
                 <i data-lucide="trash-2" style="width: 48px; height: 48px;"></i>
             </div>
-            <h3 style="margin-bottom: 1rem; font-weight: 700;">¿Confirmar Eliminación?</h3>
-            <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 2rem;">Esta operación purgará todos los registros de <strong id="deleteAppName" style="color:white;"></strong> del sistema.</p>
+            <h3 style="margin-bottom: 1rem; font-weight: 700;">¿Confirmar Acción?</h3>
+            <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 2rem;">La aplicación será archivada. Dejará de funcionar en producción pero se preservarán todos sus registros históricos.</p>
             <div style="display: flex; gap: 10px;">
-                <button id="btnConfirmDelete" class="btn-neural" style="flex: 1; background: #ff4d4d;">Purgar</button>
+                <button id="btnConfirmDelete" class="btn-neural" style="flex: 1; background: #ff4d4d;">Confirmar</button>
                 <button type="button" class="btn-outline" style="flex: 1;" onclick="hideModal('deleteModal')">Abortar</button>
             </div>
         </div>
@@ -788,14 +834,82 @@ try {
             } catch (e) {}
         }
 
-        function deleteCatalog(id) { if(confirm('¿Purgar este modelo?')) window.location.href = 'actions.php?action=delete_catalog_model&id=' + id + '&redirect_tab=catalog-tab'; }
-        function deleteService(id) { if(confirm('¿Desvincular servicio?')) window.location.href = 'actions.php?action=delete_service&id=' + id + '&redirect_tab=services-tab'; }
-        function rotateToken(id) { if(confirm('¿Rotar token de seguridad?')) window.location.href = 'actions.php?action=rotate_token&id=' + id + '&redirect_tab=apps-tab'; }
+        function platformConfirm(options) {
+            const modal = document.getElementById('deleteModal');
+            modal.querySelector('h3').innerText = options.title || '¿Confirmar Operación?';
+            modal.querySelector('p').innerHTML = options.message || '¿Deseas continuar con esta acción?';
+            
+            const iconContainer = document.getElementById('deleteModalIcon');
+            iconContainer.innerHTML = `<i data-lucide="${options.icon || 'trash-2'}" style="width: 48px; height: 48px;"></i>`;
+            iconContainer.style.color = options.isDanger ? '#ff4d4d' : 'var(--mint-neon)';
+
+            const btn = document.getElementById('btnConfirmDelete');
+            btn.innerText = options.confirmText || 'Confirmar';
+            btn.style.background = options.isDanger ? '#ff4d4d' : 'var(--mint-neon)';
+            
+            btn.onclick = function() {
+                window.location.href = options.url;
+            };
+            
+            showModal('deleteModal');
+            if (typeof lucide !== 'undefined') lucide.createIcons();
+        }
+
+        function deleteCatalog(id) { 
+            platformConfirm({
+                title: '¿Purgar Modelo?',
+                message: 'Esta operación eliminará el modelo del catálogo global.',
+                confirmText: 'Eliminar',
+                isDanger: true,
+                url: 'actions.php?action=delete_catalog_model&id=' + id + '&redirect_tab=catalog-tab'
+            });
+        }
+
+        function deleteService(id) { 
+            platformConfirm({
+                title: '¿Desvincular Servicio?',
+                message: 'Se eliminará la conexión entre la aplicación y este modelo de IA.',
+                confirmText: 'Desvincular',
+                icon: 'link-2-off',
+                isDanger: true,
+                url: 'actions.php?action=delete_service&id=' + id + '&redirect_tab=services-tab'
+            });
+        }
+
+        function rotateToken(id) { 
+            platformConfirm({
+                title: '¿Rotar Token?',
+                message: 'Se generará un nuevo token de seguridad. La aplicación deberá actualizar sus credenciales inmediatamente.',
+                confirmText: 'Rotar Token',
+                icon: 'refresh-cw',
+                isDanger: false,
+                url: 'actions.php?action=rotate_token&id=' + id + '&redirect_tab=apps-tab'
+            });
+        }
+
         function toggleStatus(id) { window.location.href = 'actions.php?action=toggle_status&id=' + id + '&redirect_tab=apps-tab'; }
-        function confirmDelete(id, name) { 
-            document.getElementById('deleteAppName').innerText = name; 
-            document.getElementById('btnConfirmDelete').onclick = function() { window.location.href = 'actions.php?action=delete_app&id=' + id + '&redirect_tab=apps-tab'; }; 
-            showModal('deleteModal'); 
+        
+        function showEditAppModal(id, name) {
+            document.getElementById('editAppId').value = id;
+            document.getElementById('editAppName').value = name;
+            showModal('editAppModal');
+        }
+
+        function confirmDelete(id, name) {             platformConfirm({
+                title: '¿Archivar Aplicación?',
+                message: `¿Estás seguro de archivar <strong>${name}</strong>? Dejará de responder Handshakes pero mantendrás las estadísticas.`,
+                confirmText: 'Archivar App',
+                icon: 'archive',
+                isDanger: true,
+                url: 'actions.php?action=delete_app&id=' + id + '&redirect_tab=apps-tab'
+            });
+        }
+
+        function toggleArchivedView(show) {
+            const url = new URL(window.location.href);
+            if (show) url.searchParams.set('show_archived', '1');
+            else url.searchParams.delete('show_archived');
+            window.location.href = url.toString();
         }
         window.onload = function() { 
             refreshStats(); 
@@ -807,6 +921,11 @@ try {
             const urlParams = new URLSearchParams(window.location.search);
             const tab = urlParams.get('tab') || 'apps-tab';
             showTab(tab);
+
+            // Manejo de errores desde URL
+            if (urlParams.get('error') === 'app_has_logs') {
+                showToast('OPERACIÓN BLOQUEADA: La aplicación tiene registros de logs activos.', 'error', 6000);
+            }
         };
     </script>
 </body>

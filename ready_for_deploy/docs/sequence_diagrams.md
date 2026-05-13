@@ -54,3 +54,26 @@ sequenceDiagram
     Hub-->>Hub: Registro de Ã‰xito en Logs
     Hub-->>App: Respuesta del Modelo de Respaldo
 ```
+
+## Handshake Idempotente (Auto-Onboarding & Shared Identity)
+
+Flujo utilizado para registro inicial o recuperación de tokens en despliegues multi-usuario.
+
+`mermaid
+sequenceDiagram
+    participant App as App (Cualquier Instancia)
+    participant Hub as KODAN-HUB
+    participant DB as SQLite Master
+
+    App->>Hub: POST / [Headers: X-KODAN-APP-ID] (Body Vacío)
+    Hub->>DB: SELECT * FROM apps WHERE app_id = ?
+    
+    alt Registro Nuevo
+        DB-->>Hub: NULL
+        Hub->>DB: INSERT INTO apps (ID, Token, Status)
+        Hub-->>App: 200 OK { new_kodan_token: " KDN-NEW\, message: \Registrado\ }
+ else Recuperación (Shared Identity)
+ DB-->>Hub: App Record (Token: KDN-EXISTING)
+ Hub-->>App: 200 OK { new_kodan_token: \KDN-EXISTING\, message: \Sincronizado\ }
+ end
+`

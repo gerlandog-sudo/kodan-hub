@@ -49,10 +49,14 @@ try {
         $app = !empty($results) ? $results[0] : null;
     }
 
-    // 2. Handshake Automático (Registro)
-    if (!$app && !empty($appId)) {
-        $inputJSON = file_get_contents('php://input');
-        if (empty($inputJSON)) {
+    // 2. Capturar Cuerpo del Mensaje (Una sola vez para evitar vaciar el stream)
+    $inputRaw = file_get_contents('php://input');
+    $inputJSON = json_decode($inputRaw, true);
+
+    // 3. Handshake Automático (Registro / Recuperación)
+    if (!empty($appId) && empty($inputRaw)) {
+        if (!$app) {
+            // Caso: Registro de nueva App
             $newToken = 'KDN-' . strtoupper(substr(md5(uniqid()), 0, 16));
             $appName = $headers['X-KODAN-APP-NAME'] ?? 'Nueva App';
             
@@ -62,10 +66,21 @@ try {
                 'token' => $newToken,
                 'status' => 'active'
             ]);
-
-            echo json_encode(['status' => 'success', 'new_kodan_token' => $newToken, 'message' => 'Handshake OK']);
-            exit;
+            
+            echo json_encode([
+                'status' => 'success', 
+                'new_kodan_token' => $newToken, 
+                'message' => 'Handshake OK (Registrado)'
+            ]);
+        } else {
+            // Caso: Recuperación de token para App existente
+            echo json_encode([
+                'status' => 'success', 
+                'new_kodan_token' => $app['token'], 
+                'message' => 'Handshake OK (Sincronizado)'
+            ]);
         }
+        exit;
     }
 
     if (!$app || $app['status'] !== 'active') {
@@ -73,11 +88,9 @@ try {
         die(json_encode(['status' => 'error', 'message' => 'App no autorizada, pausada o Token inválido.']));
     }
 
-    // 3. Procesar IA
-    $inputJSON = file_get_contents('php://input');
-    $input = json_decode($inputJSON, true);
-    $action = $input['action'] ?? null;
-    $payload = $input['payload'] ?? [];
+    // 4. Procesar IA
+    $action = $inputJSON['action'] ?? null;
+    $payload = $inputJSON['payload'] ?? [];
 
     if ($action !== 'ai' || empty($payload)) {
         die(json_encode(['status' => 'error', 'message' => 'Acción IA no válida o sin contenido.']));

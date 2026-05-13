@@ -16,9 +16,31 @@ class GeminiProxy
         if (empty($contents) && isset($payload['messages'])) {
             foreach ($payload['messages'] as $msg) {
                 $role = ($msg['role'] ?? 'user') === 'assistant' ? 'model' : 'user';
+                $parts = [];
+                
+                if (is_array($msg['content'])) {
+                    foreach ($msg['content'] as $part) {
+                        if (($part['type'] ?? '') === 'text') {
+                            $parts[] = ["text" => $part['text'] ?? ''];
+                        } elseif (($part['type'] ?? '') === 'image_url') {
+                            $url = $part['image_url']['url'] ?? '';
+                            if (preg_match('/data:(image\/[a-zA-Z]*);base64,(.*)/', $url, $matches)) {
+                                $parts[] = [
+                                    "inlineData" => [
+                                        "mimeType" => $matches[1],
+                                        "data" => $matches[2]
+                                    ]
+                                ];
+                            }
+                        }
+                    }
+                } else {
+                    $parts[] = ["text" => $msg['content'] ?? ''];
+                }
+
                 $contents[] = [
                     "role" => $role,
-                    "parts" => [["text" => $msg['content'] ?? '']]
+                    "parts" => $parts
                 ];
             }
         }

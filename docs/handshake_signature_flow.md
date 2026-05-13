@@ -63,7 +63,8 @@ curl -X POST https://hub.kodan.software/ \
 }
 ```
 > [!IMPORTANT]
-> El cliente debe persistir este `new_kodan_token` localmente para todas sus peticiones futuras.
+> **Idempotencia y Multi-usuario:** El Hub permite que múltiples instancias de una misma aplicación (ej: todos los empleados de una empresa o todos los usuarios de una App global) obtengan el mismo token. Si una app ya existe con el `X-KODAN-APP-ID` proveído, el Hub devolverá el token existente en lugar de crear uno nuevo.
+> El cliente debe persistir este `new_kodan_token` localmente, pero puede volver a pedirlo realizando un handshake si lo pierde.
 
 ### Paso 2: Consumir el Servicio de IA
 Una vez obtenido el token, todas las peticiones deben incluirlo y enviar el payload con la acción `ai`.
@@ -88,15 +89,14 @@ curl -X POST https://hub.kodan.software/ \
 
 ## 4. Auditoría Técnica de Seguridad
 
-1.  **Validación de Origen (CORS):** El Hub valida estrictamente que el origin pertenezca a `*.kodan.software` (Línea 24, `index.php`).
-2.  **Generación de Token:** Utiliza un Hash MD5 de un UUID único prefijado con `KDN-`, lo que garantiza unicidad (Línea 56).
-3.  **Aislamiento de Aplicaciones:** Las aplicaciones solo pueden acceder a los servicios de IA que el administrador del Hub les asigne en la tabla `app_services` vinculada por `app_id` (Línea 91).
-4.  **Resiliencia (Failover):** El Hub itera sobre múltiples servicios configurados. Si el primero falla, intenta con el siguiente en la lista de prioridad (Línea 99).
+1.  **Validación de Origen (CORS):** El Hub valida estrictamente que el origin pertenezca a `*.kodan.software`.
+2.  **Complejidad de Registro:** La seguridad del handshake autónomo se basa en el **App-ID Impredecible**. Solo quien conozca el ID secreto puede registrarse o recuperar el token.
+3.  **Aislamiento de Aplicaciones:** Las aplicaciones solo pueden acceder a los servicios de IA que el administrador del Hub les asigne en la tabla `app_services`.
+4.  **Resiliencia de Cliente (Nivel 2):** Se recomienda que el cliente implemente una lógica de auto-sincronización; si recibe un error de autenticación, debe invalidar su caché local y re-intentar el handshake.
 
 ---
 
-## 5. Recomendación de Mejora (Auditoría Antigravity)
+## 5. Recomendación de Implementación (Antigravity Standard)
 
-> [!WARNING]
-> **Riesgo de Suplantación:** Actualmente, el registro inicial solo requiere un `X-KODAN-APP-ID`. Si un atacante conoce el ID de una app que aún no se ha registrado, podría "secuestrar" el registro.
-> **Solución:** Implementar un `X-KODAN-APP-SECRET` pre-compartido o validación de dominio IP en el primer contacto.
+> [!TIP]
+> **Identidad Segura en Mobile:** Para apps masivas como SmartCook, utiliza un ID que combine un prefijo de marca con un hash único (ej: `KDN-SC-PROD-9A2F...`). Evita IDs genéricos para prevenir ataques de suplantación durante la fase de registro inicial.
