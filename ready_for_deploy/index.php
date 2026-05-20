@@ -74,6 +74,14 @@ try {
             ]);
         } else {
             // Caso: Recuperación de token para App existente
+            if ($app['status'] !== 'active') {
+                http_response_code(403);
+                echo json_encode([
+                    'status' => 'error',
+                    'message' => 'Handshake rechazado: La aplicación está inactiva o pausada en el Hub.'
+                ]);
+                exit;
+            }
             echo json_encode([
                 'status' => 'success', 
                 'new_kodan_token' => $app['token'], 

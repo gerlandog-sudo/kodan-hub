@@ -6,16 +6,16 @@ Este documento detalla el protocolo de comunicación entre aplicaciones cliente 
 
 ## 1. Conceptos Fundamentales
 
-### 1.1 El App-ID como Ancla de Identidad
+### 1.1 El App-ID como Ancla de Identidad y Seguridad
 A diferencia de otros sistemas donde cada usuario tiene su propia API Key, en KodanHUB el acceso se gestiona a nivel de **Instancia de Aplicación** o **Tenant (Empresa)**.
 
--   **X-KODAN-APP-ID**: Es el identificador único. 
-    -   Para apps globales (SmartCook): Se usa un ID fijo (ej: `smartcook-global`).
-    -   Para SaaS Multi-tenant (TimeTracker): Se usa un ID por empresa (ej: `TT-Globant-2026`).
--   **X-KODAN-TOKEN**: Es la llave de sesión generada por el Hub. Una vez obtenida mediante handshake, debe persistirse.
+-   **X-KODAN-APP-ID**: Es el identificador único y actúa como **llave de registro**.
+    -   **Seguridad**: Para evitar suplantaciones, el ID no debe ser genérico (ej: `smartcook-global`). Debe ser una cadena larga y compleja (ej: `SC-MASTER-8DAC5109A1508665`).
+    -   **Escalabilidad**: Todos los usuarios de la misma aplicación comparten este ID.
+-   **X-KODAN-TOKEN**: Es la llave de sesión generada por el Hub. Una vez obtenida mediante handshake, debe persistirse localmente en el dispositivo.
 
-### 1.2 Handshake Idempotente (Recuperación Automática)
-El handshake es el proceso de "presentación" de una app. Es **idempotente**, lo que significa que puedes llamarlo múltiples veces y el Hub siempre te dará la misma respuesta válida para ese ID.
+### 1.2 Handshake Idempotente (Registro y Recuperación)
+El handshake es el proceso de "presentación" de una app. Es **idempotente**, lo que permite que una app recupere su token si lo pierde (por ejemplo, al reinstalarse).
 
 ---
 
@@ -28,22 +28,22 @@ La aplicación debe realizar un `POST` al root del Hub con el cuerpo del mensaje
 ```http
 POST / HTTP/1.1
 Host: hub.kodan.software
-X-KODAN-APP-ID: [TU_ID_UNICO]
+X-KODAN-APP-ID: [MASTER_ID_COMPLEJO]
 X-KODAN-APP-NAME: [NOMBRE_AMIGABLE]
 Content-Length: 0
 ```
 
 ### Paso 2: Procesamiento del Hub
-El Hub sigue esta lógica interna:
+El Hub sigue esta lógica interna de forma autónoma:
 1.  **¿Existe el ID?**
-    -   **NO**: Crea un nuevo registro, genera un Token aleatorio y lo devuelve.
-    -   **SÍ**: Recupera el Token existente del registro y lo devuelve.
+    -   **NO (Registro)**: Crea un nuevo registro vinculado a ese ID complejo, genera un Token y lo devuelve.
+    -   **SÍ (Recuperación)**: Recupera el Token existente del registro y lo devuelve.
 2.  **Respuesta JSON:**
 ```json
 {
   "status": "success",
   "new_kodan_token": "KDN-XXXXXXXXXXXXXXXX",
-  "message": "Handshake OK (Sincronizado)"
+  "message": "Handshake OK"
 }
 ```
 
@@ -51,24 +51,25 @@ El Hub sigue esta lógica interna:
 
 ## 3. Estrategias de Implementación
 
-### 3.1 Modelo App Global (Ej: SmartCook)
-Ideal para apps de consumo masivo donde no hay distinción de empresas.
--   **Estrategia:** Hardcodear el `APP-ID` en el binario.
--   **Flujo:** Todos los usuarios del mundo envían el mismo ID -> El Hub les da a todos el mismo Token -> El consumo se agrupa bajo una sola entrada "SmartCook" en el panel de administración.
+### 3.1 Modelo de Aplicación Masiva (SmartCook Style)
+Ideal para apps móviles donde miles de usuarios comparten una misma cuota de IA.
+-   **Seguridad**: El **Master App-ID** complejo se incluye en el código de la App (ofuscado).
+-   **Persistencia**: La App realiza el handshake solo la primera vez y guarda el Token en almacenamiento persistente (`AsyncStorage`).
+-   **Resiliencia**: Si el Hub invalida el token, la App detecta el error 401 y realiza un re-handshake automático.
 
-### 3.2 Modelo SaaS Multi-tenant (Ej: TimeTracker)
-Ideal para plataformas B2B donde cada cliente debe tener su propia cuota o métricas.
--   **Estrategia:** Generar un `APP-ID` único por Empresa (Tenant) en el momento de la creación de la cuenta.
--   **Flujo:** Todos los empleados de "Empresa A" usan el `ID-A` -> El Hub les da el `Token-A`. Los de "Empresa B" obtienen el `Token-B`.
--   **Métricas:** El administrador del Hub puede ver exactamente cuánto gasta cada cliente en IA.
+### 3.2 Modelo SaaS Multi-tenant (TimeTracker Style)
+Ideal para plataformas donde cada cliente (empresa) tiene su propia identidad.
+-   **Diferenciación**: Se genera un `App-ID` único y aleatorio por cada Tenant en el momento de su creación.
+-   **Aislamiento**: El consumo de "Empresa A" no afecta a "Empresa B", permitiendo auditorías granulares por cliente.
 
 ---
 
-## 4. Mejores Prácticas
+## 4. Mejores Prácticas de Seguridad
 
-1.  **Persistencia Local:** Aunque el handshake es idempotente, las apps deben guardar el token en `AsyncStorage` (Mobile) o en la DB (Web) para evitar llamadas innecesarias al Hub.
-2.  **Re-Sincronización:** Si una app recibe un error `401 Unauthorized`, debe borrar su token local y volver a realizar el Handshake.
-3.  **Seguridad por Ofuscación:** Dado que el `APP-ID` es la llave para obtener el token, evita exponerlo en logs públicos o URLs.
+1.  **Complejidad del ID**: Nunca uses IDs predecibles. La seguridad del handshake autónomo reside en la imposibilidad de adivinar el `App-ID`.
+2.  **Persistencia y Performance**: Las apps **nunca** deben hacer handshake en cada llamada. El token debe leerse del almacenamiento local.
+3.  **Resiliencia Nivel 2**: Implementar una lógica de auto-limpieza; si el token guardado falla, la app debe intentar sincronizarse de nuevo automáticamente antes de reportar error al usuario.
+4.  **Cero Hardcode de Tokens**: Nunca grabes el `X-KODAN-TOKEN` directamente en el código; deja que el Handshake lo gestione dinámicamente.
 
 ---
 
