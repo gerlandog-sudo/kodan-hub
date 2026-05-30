@@ -1,0 +1,1304 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KodanHUB — White Papers Técnicos</title>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            mermaid.initialize({
+                startOnLoad: true,
+                theme: 'dark',
+                themeVariables: {
+                    primaryColor: '#1565c0',
+                    primaryTextColor: '#fff',
+                    primaryBorderColor: '#0d47a1',
+                    lineColor: '#4a9eff',
+                    secondaryColor: '#2e7d32',
+                    tertiaryColor: '#f9a825',
+                    clusterBkg: '#1a1a2e',
+                    clusterBorder: '#2d2d5e',
+                    nodeBorder: '#4a9eff',
+                    nodeTextColor: '#e0e0e0',
+                    edgeLabelBackground: '#1a1a2e',
+                    fontFamily: 'Inter, system-ui, -apple-system, sans-serif'
+                },
+                flowchart: { useMaxWidth: true, htmlLabels: true, curve: 'basis' },
+                sequence: { showSequenceNumbers: false, actorFontSize: 14, messageFontSize: 12 },
+                er: { useMaxWidth: true },
+                state: { useMaxWidth: true }
+            });
+        });
+    </script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        /* ============================================================
+           KODANHUB WHITE PAPERS — MASTER STYLESHEET
+           ============================================================ */
+        :root {
+            --bg-primary: #0a0a1a;
+            --bg-secondary: #12122a;
+            --bg-card: #1a1a3e;
+            --bg-code: #0d0d24;
+            --text-primary: #e0e0f0;
+            --text-secondary: #9090b0;
+            --text-muted: #606080;
+            --accent-blue: #4a9eff;
+            --accent-green: #4caf50;
+            --accent-yellow: #f9a825;
+            --accent-red: #f44336;
+            --accent-purple: #9c27b0;
+            --accent-cyan: #00bcd4;
+            --border-color: #2a2a5a;
+            --gradient-1: linear-gradient(135deg, #1565c0, #4a9eff);
+            --gradient-2: linear-gradient(135deg, #2e7d32, #4caf50);
+            --shadow: 0 4px 24px rgba(0,0,0,0.4);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.7;
+            -webkit-font-smoothing: antialiased;
+            padding: 0;
+        }
+
+        /* ========== PRINT STYLES ========== */
+        @media print {
+            @page { margin: 1.5cm 2cm; size: A4 portrait; }
+            body { background: white; color: #1a1a2e; font-size: 11pt; }
+            .no-print, #toc, .back-to-top, nav { display: none !important; }
+            .wp-section { break-before: page; margin: 0; padding: 0; }
+            .wp-section:first-child { break-before: avoid; }
+            .mermaid-wrapper { break-inside: avoid; }
+            pre { break-inside: avoid; }
+            table { break-inside: avoid; font-size: 9pt; }
+            .card { background: #f5f5f5 !important; border: 1px solid #ddd !important; box-shadow: none !important; }
+            .badge { background: #e0e0e0 !important; color: #333 !important; }
+            h1 { color: #0d47a1 !important; }
+            h2 { color: #1565c0 !important; border-color: #1565c0 !important; }
+            h3 { color: #1976d2 !important; }
+            code { color: #c62828 !important; background: #f5f5f5 !important; }
+            .hero h1 { color: white !important; }
+        }
+
+        /* ========== LAYOUT ========== */
+        .container { max-width: 1200px; margin: 0 auto; padding: 0 2rem; }
+
+        /* ========== HERO ========== */
+        .hero {
+            background: linear-gradient(135deg, #0a0a2e 0%, #1a1a4e 50%, #0d0d2a 100%);
+            padding: 6rem 2rem 4rem;
+            text-align: center;
+            border-bottom: 1px solid var(--border-color);
+            position: relative;
+            overflow: hidden;
+        }
+        .hero::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle at 30% 50%, rgba(74,158,255,0.08) 0%, transparent 50%),
+                        radial-gradient(circle at 70% 50%, rgba(76,175,80,0.05) 0%, transparent 50%);
+            pointer-events: none;
+        }
+        .hero h1 {
+            font-size: 3.5rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, #4a9eff, #4caf50);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            letter-spacing: -0.03em;
+            position: relative;
+        }
+        .hero .subtitle {
+            font-size: 1.3rem;
+            color: var(--text-secondary);
+            margin-top: 0.5rem;
+            font-weight: 300;
+        }
+        .hero .meta {
+            margin-top: 2rem;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+        .hero .meta span {
+            display: inline-block;
+            margin: 0 1rem;
+            padding: 0.25rem 1rem;
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+        }
+        .hero .badge-row {
+            margin-top: 1.5rem;
+            display: flex;
+            justify-content: center;
+            gap: 0.75rem;
+            flex-wrap: wrap;
+        }
+
+        /* ========== TABLE OF CONTENTS ========== */
+        #toc {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 2rem;
+            margin: 3rem auto;
+            max-width: 800px;
+        }
+        #toc h2 { font-size: 1.5rem; margin-bottom: 1.5rem; color: var(--accent-blue); border: none; padding: 0; }
+        #toc ol { list-style: none; counter-reset: toc-counter; }
+        #toc ol li { counter-increment: toc-counter; margin: 0.5rem 0; }
+        #toc ol li::before {
+            content: counter(toc-counter);
+            display: inline-block;
+            width: 28px; height: 28px;
+            background: var(--gradient-1);
+            color: white;
+            border-radius: 50%;
+            text-align: center;
+            line-height: 28px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            margin-right: 0.75rem;
+        }
+        #toc ol li a { color: var(--text-primary); text-decoration: none; font-weight: 500; }
+        #toc ol li a:hover { color: var(--accent-blue); }
+
+        /* ========== SECTION ========== */
+        .wp-section {
+            padding: 3rem 2rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+        .wp-section:last-child { border-bottom: none; }
+
+        h1 { font-size: 2.5rem; font-weight: 700; margin-bottom: 1.5rem; letter-spacing: -0.02em; }
+        h2 {
+            font-size: 1.75rem;
+            font-weight: 600;
+            margin: 2.5rem 0 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid var(--accent-blue);
+            color: var(--accent-blue);
+        }
+        h3 {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin: 1.5rem 0 0.75rem;
+            color: var(--accent-cyan);
+        }
+        h4 { font-size: 1.1rem; font-weight: 500; margin: 1rem 0 0.5rem; color: var(--text-secondary); }
+        p { margin-bottom: 1rem; color: var(--text-secondary); }
+        a { color: var(--accent-blue); }
+
+        /* ========== BADGES ========== */
+        .badge {
+            display: inline-block;
+            padding: 0.25rem 1rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+        .badge-blue { background: rgba(74,158,255,0.15); color: var(--accent-blue); border: 1px solid rgba(74,158,255,0.3); }
+        .badge-green { background: rgba(76,175,80,0.15); color: var(--accent-green); border: 1px solid rgba(76,175,80,0.3); }
+        .badge-yellow { background: rgba(249,168,37,0.15); color: var(--accent-yellow); border: 1px solid rgba(249,168,37,0.3); }
+        .badge-red { background: rgba(244,67,54,0.15); color: var(--accent-red); border: 1px solid rgba(244,67,54,0.3); }
+        .badge-purple { background: rgba(156,39,176,0.15); color: var(--accent-purple); border: 1px solid rgba(156,39,176,0.3); }
+
+        /* ========== CODE ========== */
+        pre {
+            background: var(--bg-code);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 1.25rem;
+            overflow-x: auto;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.85rem;
+            line-height: 1.5;
+            margin: 1rem 0;
+            color: #e0e0f0;
+        }
+        code {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.85em;
+            background: rgba(74,158,255,0.1);
+            padding: 0.15em 0.4em;
+            border-radius: 4px;
+            color: var(--accent-blue);
+        }
+        pre code { background: none; padding: 0; color: inherit; }
+
+        /* ========== MERMAID ========== */
+        .mermaid-wrapper {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 2rem;
+            margin: 2rem 0;
+            overflow: hidden;
+            box-shadow: var(--shadow);
+        }
+        .mermaid-wrapper .mermaid {
+            text-align: center;
+            min-height: 100px;
+        }
+        .fig-caption {
+            text-align: center;
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            margin-top: 0.75rem;
+            font-style: italic;
+        }
+
+        /* ========== CARDS ========== */
+        .card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin: 1rem 0;
+            box-shadow: var(--shadow);
+        }
+        .card-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1rem;
+            margin: 1.5rem 0;
+        }
+
+        /* ========== TABLES ========== */
+        .table-wrapper { overflow-x: auto; margin: 1.5rem 0; }
+        table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            overflow: hidden;
+        }
+        thead { background: var(--bg-card); }
+        th { padding: 0.75rem 1rem; text-align: left; font-weight: 600; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); border-bottom: 2px solid var(--border-color); }
+        td { padding: 0.75rem 1rem; border-bottom: 1px solid var(--border-color); font-size: 0.9rem; }
+        tr:last-child td { border-bottom: none; }
+        tr:hover { background: rgba(74,158,255,0.05); }
+
+        /* ========== ALERTS / CALLOUTS ========== */
+        .callout {
+            padding: 1rem 1.5rem;
+            border-radius: 12px;
+            margin: 1.5rem 0;
+            border-left: 4px solid;
+        }
+        .callout-info { background: rgba(74,158,255,0.1); border-color: var(--accent-blue); }
+        .callout-warning { background: rgba(249,168,37,0.1); border-color: var(--accent-yellow); }
+        .callout-danger { background: rgba(244,67,54,0.1); border-color: var(--accent-red); }
+        .callout-success { background: rgba(76,175,80,0.1); border-color: var(--accent-green); }
+
+        /* ========== BACK TO TOP ========== */
+        .back-to-top {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            width: 48px; height: 48px;
+            background: var(--gradient-1);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 1.5rem;
+            box-shadow: var(--shadow);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0.8;
+            transition: opacity 0.2s;
+            z-index: 1000;
+            text-decoration: none;
+        }
+        .back-to-top:hover { opacity: 1; }
+
+        /* ========== HEADER NAV ========== */
+        nav {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 999;
+            background: rgba(10,10,26,0.9);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--border-color);
+            padding: 0.75rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        nav .logo { font-weight: 700; font-size: 1.1rem; color: var(--accent-blue); }
+        nav .logo span { color: var(--accent-green); }
+        nav .links { display: flex; gap: 1.5rem; }
+        nav .links a { color: var(--text-secondary); text-decoration: none; font-size: 0.85rem; transition: color 0.2s; }
+        nav .links a:hover { color: var(--accent-blue); }
+
+        /* ========== RESPONSIVE ========== */
+        @media (max-width: 768px) {
+            .hero h1 { font-size: 2rem; }
+            .container { padding: 0 1rem; }
+            .wp-section { padding: 2rem 1rem; }
+            nav .links { display: none; }
+            .card-grid { grid-template-columns: 1fr; }
+            #toc { margin: 1.5rem 1rem; padding: 1.5rem; }
+        }
+
+        /* ========== KEYLINE DECORATION ========== */
+        .keyline {
+            height: 4px;
+            background: linear-gradient(90deg, var(--accent-blue), var(--accent-green), var(--accent-yellow));
+            border-radius: 2px;
+            margin: 2rem 0;
+            width: 100px;
+        }
+        .center { text-align: center; }
+        .mt-2 { margin-top: 2rem; }
+        .mb-2 { margin-bottom: 2rem; }
+    </style>
+</head>
+<body>
+
+<!-- ========== NAV ========== -->
+<nav class="no-print">
+    <div class="logo">Kodan<span>HUB</span></div>
+    <div class="links">
+        <a href="#wp1">WP1: Arquitectura</a>
+        <a href="#wp2">WP2: Flujos</a>
+        <a href="#wp3">WP3: ERD</a>
+        <a href="#wp4">WP4: APIs</a>
+    </div>
+</nav>
+
+<!-- ========== HERO ========== -->
+<section class="hero">
+    <h1>KodanHUB</h1>
+    <p class="subtitle">AI Gateway Centralizado — Documentación Técnica</p>
+    <div class="badge-row">
+        <span class="badge badge-blue">v1.0.49</span>
+        <span class="badge badge-green">PHP 8.x</span>
+        <span class="badge badge-yellow">SQLite 3</span>
+        <span class="badge badge-purple">White Paper</span>
+    </div>
+    <div class="meta">
+        <span>2026-05-26</span>
+        <span>Antigravity Ecosystem</span>
+        <span>4 White Papers</span>
+    </div>
+</section>
+
+<!-- ========== TOC ========== -->
+<div id="toc" class="no-print container">
+    <h2>Tabla de Contenidos</h2>
+    <ol>
+        <li><a href="#wp1">White Paper 01 — Arquitectura Técnica General</a></li>
+        <li><a href="#wp2">White Paper 02 — Diagramas de Flujo Detallados</a></li>
+        <li><a href="#wp3">White Paper 03 — Diagrama de Relación de Entidades</a></li>
+        <li><a href="#wp4">White Paper 04 — Diagramas de Interacción de APIs</a></li>
+    </ol>
+</div>
+
+<!-- ================================================================ -->
+<!-- WHITE PAPER 01: ARQUITECTURA TÉCNICA GENERAL                      -->
+<!-- ================================================================ -->
+<section id="wp1" class="wp-section">
+    <div class="container">
+
+        <span class="badge badge-blue">WP-01</span>
+        <h1>Arquitectura Técnica General</h1>
+        <p>Descripción del stack tecnológico, arquitectura en 4 capas, modelo de seguridad y sistema de tokens KDN.</p>
+        <div class="keyline"></div>
+
+        <!-- 1.1 Arquitectura 4 Capas -->
+        <h2>1.1 Arquitectura en 4 Capas</h2>
+        <p>KodanHUB implementa un patrón <strong>Proxy-Pass</strong> donde las aplicaciones cliente nunca poseen directamente API Keys de proveedores de IA. La comunicación fluye a través de 4 capas: Clientes, Gateway, Proveedores y Administración.</p>
+
+        <div class="mermaid-wrapper">
+            <div class="mermaid">
+graph TB
+    subgraph "Capa 1: Aplicaciones Cliente"
+        SC["SmartCook RN"]
+        TT["TimeTracker V2"]
+        CRM["kodanCRM"]
+        KW["kodanWEB"]
+    end
+    subgraph "Capa 2: KodanHUB Gateway"
+        INDEX["index.php Front Controller"]
+        AUTH["Handshake / Token KDN"]
+        subgraph "Proxies"
+            GP["GeminiProxy"]
+            OP["OpenAIProxy"]
+        end
+        DB[("SQLite Medoo ORM")]
+        LOG["LogService Auditoria"]
+    end
+    subgraph "Capa 3: Proveedores IA"
+        GAPI["Google Gemini"]
+        OAPI["OpenAI"]
+        NAPI["NVIDIA"]
+        GAPI2["Groq"]
+    end
+    subgraph "Capa 4: Administracion"
+        ADMIN["Admin Panel HTML+JS+GSAP"]
+    end
+    SC --> INDEX; TT --> INDEX; CRM --> INDEX; KW --> INDEX
+    INDEX --> AUTH --> GP --> GAPI
+    AUTH --> OP --> OAPI
+    OP --> NAPI; OP --> GAPI2
+    GP --> DB; OP --> DB; DB --> LOG
+    ADMIN --> DB
+            </div>
+            <p class="fig-caption">Figura 1.1 — Arquitectura en 4 capas: Clientes, Gateway, Proveedores, Administración.</p>
+        </div>
+
+        <!-- 1.2 Stack Tecnológico -->
+        <h2>1.2 Stack Tecnológico</h2>
+        <div class="table-wrapper">
+            <table>
+                <thead>
+                    <tr><th>Capa</th><th>Tecnología</th><th>Versión</th><th>Propósito</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td>Lenguaje</td><td>PHP</td><td>≥ 8.0</td><td>Motor principal del Gateway</td></tr>
+                    <tr><td>Base de Datos</td><td>SQLite 3</td><td>v3.x</td><td>Persistencia portable sin servidor</td></tr>
+                    <tr><td>ORM</td><td>Medoo (custom)</td><td>2.1</td><td>Wrapper PDO con prepared statements (~100 líneas)</td></tr>
+                    <tr><td>HTTP Client</td><td>cURL</td><td>nativo</td><td>Comunicación con APIs de IA</td></tr>
+                    <tr><td>Admin CSS</td><td>Glassmorphism</td><td>custom</td><td>Tema oscuro con acentos neón</td></tr>
+                    <tr><td>Admin JS</td><td>GSAP 3.12 + Lucide</td><td>3.12</td><td>Animaciones e iconografía vectorial</td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- 1.3 Seguridad en 3 Capas -->
+        <h2>1.3 Modelo de Seguridad en 3 Capas</h2>
+
+        <div class="mermaid-wrapper">
+            <div class="mermaid">
+graph TB
+    subgraph "Capa 1: Transporte y Origen"
+        HSTS["HSTS max-age=31536000"]
+        CSP["CSP restrictivo"]
+        CORS["CORS solo *.kodan.software"]
+        NOSNIFF["X-Content-Type-Options: nosniff"]
+        XFO["X-Frame-Options: DENY"]
+    end
+    subgraph "Capa 2: Autenticacion Apps"
+        HS["Handshake X-KODAN-APP-ID"]
+        TK["Token KDN Validation"]
+        ST["Status Check active/paused"]
+        RT["Rotacion old_token preservation"]
+    end
+    subgraph "Capa 3: Datos y Almacenamiento"
+        HT[".htaccess bloqueo *.sqlite"]
+        BC["Bcrypt admin password"]
+        FK["PRAGMA foreign_keys=ON"]
+        PS["Prepared Statements PDO"]
+    end
+            </div>
+            <p class="fig-caption">Figura 1.2 — Arquitectura de seguridad en 3 capas.</p>
+        </div>
+
+        <!-- 1.4 Headers de Seguridad -->
+        <h3>1.3.1 Headers HTTP de Seguridad</h3>
+        <pre><code>Content-Type:          application/json; charset=UTF-8
+Access-Control-Allow-Origin: (regex: ^https?:\/\/(.*\.?kodan\.software)$)
+Access-Control-Allow-Methods: POST, OPTIONS
+Access-Control-Allow-Headers: Content-Type, X-KODAN-TOKEN, X-KODAN-APP-ID
+X-Content-Type-Options: nosniff
+X-Frame-Options:       DENY
+Strict-Transport-Security: max-age=31536000; includeSubDomains
+Content-Security-Policy: default-src 'self'; script-src 'self';
+    connect-src 'self' https://*.googleapis.com https://api.openai.com;</code></pre>
+
+        <!-- 1.4 Sistema de Tokens KDN -->
+        <h2>1.4 Sistema de Tokens KDN</h2>
+        <p>KodanHUB implementa un sistema de tokens propio llamado <strong>KDN Token</strong>, diseñado para simplicidad y operación sin estado compartido. No utiliza JWT.</p>
+
+        <div class="card-grid">
+            <div class="card">
+                <h4>Formato del Token</h4>
+                <pre><code>KDN-[PREFIX]-[16-CHAR HEX HASH]
+Ejemplo:
+KDN-SC-8DAC5109A1508665
+KDN-TT-B3F2A1C4D5E6F789</code></pre>
+            </div>
+            <div class="card">
+                <h4>Algoritmo de Generación</h4>
+                <pre><code>function generateKodanToken($name) {
+    $prefix = initials($name);
+    $hash = strtoupper(
+        substr(md5(uniqid()), 0, 16)
+    );
+    return "KDN-$prefix-$hash";
+}</code></pre>
+            </div>
+        </div>
+
+        <h3>1.4.1 Comparativa: KDN Token vs JWT</h3>
+        <div class="table-wrapper">
+            <table>
+                <thead>
+                    <tr><th>Propiedad</th><th>KDN Token</th><th>JWT (Estándar)</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td>Formato</td><td>Hash opaco</td><td>JSON codificado Base64URL</td></tr>
+                    <tr><td>Claims</td><td>Ninguno</td><td><code>sub</code>, <code>iat</code>, <code>exp</code>, <code>iss</code></td></tr>
+                    <tr><td>Expiración</td><td>No expira (rotación manual)</td><td><code>exp</code> claim</td></tr>
+                    <tr><td>Validación</td><td>Consulta a DB (I/O)</td><td>Firma criptográfica (sin I/O)</td></tr>
+                    <tr><td>Revocación</td><td>UPDATE en SQLite</td><td>Blacklist o expiry corto</td></tr>
+                    <tr><td>Rotación</td><td><code>old_token</code> preservado</td><td>Emitir nuevo JWT</td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- 1.5 Modelos de Despliegue -->
+        <h2>1.5 Modelos de Despliegue</h2>
+
+        <div class="mermaid-wrapper">
+            <div class="mermaid">
+graph LR
+    subgraph "Mass App: Identidad Compartida"
+        U1["User 1"] --> SC1["SmartCook Instancia"]
+        U2["User N"] --> SCN["SmartCook Instancia"]
+    end
+    SC1 -->|"X-KODAN-APP-ID: SC-MASTER-8DAC5..."| HUB["KodanHUB"]
+    SCN -->|"Mismo App-ID"| HUB
+    HUB --> DB[("1 app = 1 token")]
+    subgraph "SaaS Multi-tenant: Identidad Aislada"
+        TT1["TimeTracker Tenant A"] -->|"App-ID Unico A"| HUB
+        TT2["TimeTracker Tenant B"] -->|"App-ID Unico B"| HUB
+    end
+            </div>
+            <p class="fig-caption">Figura 1.3 — Modelos de despliegue: Mass App vs SaaS Multi-tenant.</p>
+        </div>
+
+        <!-- 1.6 Traducción de Protocolo -->
+        <h2>1.6 Traducción Bidireccional de Protocolo</h2>
+        <p>KodanHUB traduce automáticamente entre los formatos de payload de OpenAI (<code>messages</code>) y Gemini (<code>contents</code>).</p>
+
+        <div class="table-wrapper">
+            <table>
+                <thead>
+                    <tr><th>Concepto</th><th>OpenAI (messages)</th><th>Gemini (contents)</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td>Roles</td><td><code>user</code>, <code>assistant</code></td><td><code>user</code>, <code>model</code></td></tr>
+                    <tr><td>Texto</td><td><code>content</code>: string</td><td><code>parts[].text</code></td></tr>
+                    <tr><td>Imágenes</td><td><code>image_url</code> con data URI</td><td><code>inlineData</code> con base64</td></tr>
+                    <tr><td>Temperatura</td><td><code>temperature</code></td><td><code>generationConfig.temperature</code></td></tr>
+                    <tr><td>Max tokens</td><td><code>max_tokens</code></td><td><code>generationConfig.maxOutputTokens</code></td></tr>
+                    <tr><td>Uso tokens</td><td><code>usage.prompt_tokens</code></td><td><code>usageMetadata.promptTokenCount</code></td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- 1.7 Failover -->
+        <h2>1.7 Sistema de Failover por Prioridad</h2>
+        <div class="mermaid-wrapper">
+            <div class="mermaid">
+graph TB
+    subgraph "Configuracion app_services"
+        S1["Servicio 1: Gemini 2.0 Flash<br/>Priority: 1"]
+        S2["Servicio 2: GPT-4o Mini<br/>Priority: 2"]
+        S3["Servicio 3: Llama 3.1 8B<br/>Priority: 3"]
+    end
+    REQ["Request IA"] --> TRY1["Intentar Servicio 1"]
+    TRY1 --> CHECK1{"HTTP 200?"}
+    CHECK1 -->|"Si"| OK["Devolver Respuesta"]
+    CHECK1 -->|"No"| TRY2["Intentar Servicio 2"]
+    TRY2 --> CHECK2{"HTTP 200?"}
+    CHECK2 -->|"Si"| OK
+    CHECK2 -->|"No"| TRY3["Intentar Servicio 3"]
+    TRY3 --> CHECK3{"HTTP 200?"}
+    CHECK3 -->|"Si"| OK
+    CHECK3 -->|"No"| FAIL["Todos fallaron"]
+            </div>
+            <p class="fig-caption">Figura 1.4 — Estrategia de failover con 3 servicios en cascada por prioridad.</p>
+        </div>
+
+        <div class="callout callout-warning">
+            <strong>⚠ Vulnerabilidad conocida:</strong> <code>CURLOPT_SSL_VERIFYPEER = false</code> en ambas clases proxy. Es intencional para compatibilidad con cPanel, pero se recomienda HSTS a nivel de servidor como mitigación.
+        </div>
+
+    </div>
+</section>
+
+<!-- ================================================================ -->
+<!-- WHITE PAPER 02: DIAGRAMAS DE FLUJO                                -->
+<!-- ================================================================ -->
+<section id="wp2" class="wp-section">
+    <div class="container">
+
+        <span class="badge badge-green">WP-02</span>
+        <h1>Diagramas de Flujo Detallados</h1>
+        <p>Flujos de handshake, proxy IA, administración y traducción de protocolo.</p>
+        <div class="keyline"></div>
+
+        <!-- 2.1 Flujo de Handshake -->
+        <h2>2.1 Flujo de Handshake (Auto-Registro)</h2>
+        <div class="mermaid-wrapper">
+            <div class="mermaid">
+flowchart TB
+    INICIO(["Peticion POST recibida"])
+    BODY_CHECK{"Body vacio?"}
+    APP_ID_CHECK{"Header X-KODAN-APP-ID presente?"}
+    DB_CHECK{"App registrada en SQLite?"}
+    STATUS_CHECK{"status = active?"}
+    RECOVER["Recuperar token existente"]
+    REGISTER["Crear nuevo registro en apps"]
+    GEN_TOKEN["Generar KDN token<br/>KDN-PREFIX-MD5_HASH"]
+    RESPOND["200 OK + new_kodan_token"]
+
+    INICIO --> BODY_CHECK
+    BODY_CHECK -->|"No"| APP_ID_CHECK
+    BODY_CHECK -->|"Si"| APP_ID_CHECK
+    APP_ID_CHECK -->|"No"| 401
+    APP_ID_CHECK -->|"Si"| DB_CHECK
+    DB_CHECK -->|"No"| REGISTER --> GEN_TOKEN --> RESPOND
+    DB_CHECK -->|"Si"| STATUS_CHECK
+    STATUS_CHECK -->|"No"| 403
+    STATUS_CHECK -->|"Si"| RECOVER --> RESPOND
+            </div>
+            <p class="fig-caption">Figura 2.1 — Flujo de handshake con auto-registro y recuperación idempotente.</p>
+        </div>
+
+        <!-- 2.2 Ciclo Proxy IA -->
+        <h2>2.2 Ciclo Completo de Proxy IA</h2>
+        <div class="mermaid-wrapper">
+            <div class="mermaid">
+flowchart TB
+    AUTH_OK(["App Autenticada"])
+    LOAD_SVC["Cargar servicios x prioridad<br/>app_services JOIN ai_catalog"]
+    PROTO_CHECK{"Protocolo?"}
+    TRAD_OPENAI["Traducir Gemini -> OpenAI"]
+    TRAD_GEMINI["Traducir OpenAI -> Gemini"]
+    EXEC["Ejecutar cURL al proveedor"]
+    HTTP_CHECK{"HTTP 200?"}
+    LOG_OK["Log success + tokens"]
+    LOG_ERR["Log error"]
+    RESPOND["200 OK al cliente"]
+    NEXT{"Hay mas servicios?"}
+    FAIL["500 Todos fallaron"]
+
+    AUTH_OK --> LOAD_SVC
+    LOAD_SVC --> PROTO_CHECK
+    PROTO_CHECK -->|"openai-v1"| TRAD_OPENAI --> EXEC
+    PROTO_CHECK -->|"gemini-v1"| TRAD_GEMINI --> EXEC
+    EXEC --> HTTP_CHECK
+    HTTP_CHECK -->|"Si"| LOG_OK --> RESPOND
+    HTTP_CHECK -->|"No"| LOG_ERR --> NEXT
+    NEXT -->|"Si"| LOAD_SVC
+    NEXT -->|"No"| FAIL
+            </div>
+            <p class="fig-caption">Figura 2.2 — Ciclo de proxy IA con failover y traducción automática.</p>
+        </div>
+
+        <!-- 2.3 Flujo Admin -->
+        <h2>2.3 Flujo de Administración</h2>
+        <div class="mermaid-wrapper">
+            <div class="mermaid">
+flowchart TB
+    DASH["Dashboard Admin"]
+    APPS["Gestion de Apps"]
+    CATALOG["Catalogo de Modelos"]
+    SERVICES["Asignacion de Servicios"]
+    STATS["Estadisticas y Logs"]
+
+    DASH --> APPS
+    DASH --> CATALOG
+    DASH --> SERVICES
+    DASH --> STATS
+
+    APPS --> ADD["Crear App + Token"]
+    APPS --> ROTATE["Rotar Token"]
+    APPS --> TOGGLE["Activar/Desactivar"]
+    APPS --> ARCHIVE["Archivar (soft delete)"]
+
+    CATALOG --> ADD_MODEL["Agregar Modelo IA"]
+    CATALOG --> EDIT_MODEL["Editar Modelo"]
+    CATALOG --> DEL_MODEL["Eliminar Modelo"]
+
+    SERVICES --> ADD_SVC["Asignar Modelo a App"]
+    SERVICES --> EDIT_SVC["Editar Asignacion"]
+    SERVICES --> TEST_SVC["Diagnostico Ping"]
+    SERVICES --> DEL_SVC["Desvincular"]
+
+    STATS --> TOKENS["Tokens totales"]
+    STATS --> REQUESTS["Requests totales"]
+    STATS --> ERRORS["Logs de error"]
+    STATS --> CONSUMPTION["Consumo filtrado"]
+            </div>
+            <p class="fig-caption">Figura 2.3 — Flujo completo del panel de administración.</p>
+        </div>
+
+        <!-- 2.4 Traducción de Protocolo -->
+        <h2>2.4 Traducción de Protocolo (Detalle Técnico)</h2>
+        <div class="mermaid-wrapper">
+            <div class="mermaid">
+flowchart LR
+    subgraph "OpenAI -> Gemini"
+        O1["payload.messages"] --> O2["Iterar messages"]
+        O2 --> O3["role: assistant -> model<br/>content -> parts[].text<br/>image_url -> inlineData"]
+        O3 --> O4["Construir contents + generationConfig"]
+        O4 --> O5["POST a Gemini API"]
+    end
+    subgraph "Gemini -> OpenAI"
+        G1["payload.contents"] --> G2["Iterar contents"]
+        G2 --> G3["role: model -> assistant<br/>parts[].text -> content<br/>inlineData -> image_url"]
+        G3 --> G4["Si vacio: inyectar mensaje dummy"]
+        G4 --> G5["Construir model + messages"]
+        G5 --> G6["POST con Authorization Bearer"]
+    end
+            </div>
+            <p class="fig-caption">Figura 2.4 — Flujo detallado de traducción bidireccional Gemini ↔ OpenAI.</p>
+        </div>
+
+        <!-- 2.5 Seguridad -->
+        <h2>2.5 Flujo de Validación y Seguridad</h2>
+        <div class="mermaid-wrapper">
+            <div class="mermaid">
+flowchart TB
+    REQ_IN["Request HTTP Entrante"]
+    CORS{"Origin coincide con<br/>*.kodan.software?"}
+    METHOD{"Method = POST?"}
+    JSON{"Content-Type = application/json?"}
+    TOKEN{"Header X-KODAN-TOKEN?"}
+    APPID{"Header X-KODAN-APP-ID?"}
+    BODY_EMPTY{"Body vacio?"}
+    AUTH["Validar Token en DB"]
+    ACTIVE{"status = active?"}
+    HANDSHAKE["Ejecutar Handshake"]
+    PROXY["Ejecutar Proxy IA"]
+    BLOCK["403 Blocked"]
+
+    REQ_IN --> CORS
+    CORS -->|"No"| BLOCK
+    CORS -->|"Si"| METHOD
+    METHOD -->|"No"| BLOCK
+    METHOD -->|"Si"| JSON
+    JSON -->|"No"| BLOCK
+    JSON -->|"Si"| TOKEN
+    JSON --> APPID
+    TOKEN -->|"Si"| AUTH --> ACTIVE
+    ACTIVE -->|"Si"| PROXY
+    ACTIVE -->|"No"| BLOCK
+    APPID -->|"Si"| BODY_EMPTY
+    BODY_EMPTY -->|"Si"| HANDSHAKE
+            </div>
+            <p class="fig-caption">Figura 2.5 — Flujo completo de validación de requests entrantes.</p>
+        </div>
+
+    </div>
+</section>
+
+<!-- ================================================================ -->
+<!-- WHITE PAPER 03: ENTIDAD-RELACIÓN                                  -->
+<!-- ================================================================ -->
+<section id="wp3" class="wp-section">
+    <div class="container">
+
+        <span class="badge badge-yellow">WP-03</span>
+        <h1>Diagrama de Relación de Entidades</h1>
+        <p>Modelo de datos completo con 6 tablas, relaciones y diccionario de datos.</p>
+        <div class="keyline"></div>
+
+        <!-- 3.1 ERD Completo -->
+        <h2>3.1 Diagrama ERD Completo</h2>
+        <div class="mermaid-wrapper">
+            <div class="mermaid">
+erDiagram
+    PROJECTS ||--o{ APPS : "organiza"
+    APPS ||--o{ APP_SERVICES : "tiene"
+    APPS ||--o{ LOGS : "genera"
+    APPS ||--o{ TRANSLATIONS : "localiza"
+    AI_CATALOG ||--o{ APP_SERVICES : "provee"
+
+    PROJECTS {
+        int id PK
+        string name
+        text description
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    APPS {
+        int id PK
+        int project_id FK
+        string name
+        string app_id UK "Hardware/Bundle ID"
+        string token UK "KDN-PREFIX-HASH"
+        string old_token "Preservado en rotacion"
+        string status "active/inactive/paused/archived"
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    AI_CATALOG {
+        int id PK
+        string provider "GOOGLE/OPENAI/NVIDIA/GROQ"
+        string name "Nombre amigable"
+        string identifier "ID tecnico del modelo"
+        string protocol "openai-v1/gemini-v1"
+        string endpoint "URL del endpoint API"
+    }
+
+    APP_SERVICES {
+        int id PK
+        int app_id FK
+        int catalog_id FK
+        string api_key "API Key del proveedor"
+        int priority "Failover: 1=primario"
+        boolean is_active "1=activo"
+    }
+
+    LOGS {
+        int id PK
+        int app_id FK
+        string model "Modelo usado"
+        int tokens_in "Prompt tokens"
+        int tokens_out "Completion tokens"
+        real latency "Segundos"
+        string status "success/error"
+        timestamp timestamp "Momento de la transaccion"
+    }
+
+    TRANSLATIONS {
+        int id PK
+        int app_id FK
+        string key "Clave de traduccion"
+        text value "Valor traducido"
+        string locale "en/es/fr/de"
+    }
+            </div>
+            <p class="fig-caption">Figura 3.1 — Diagrama ERD completo del sistema KodanHUB con 6 tablas y 5 relaciones.</p>
+        </div>
+
+        <!-- 3.2 Tabla Central: apps -->
+        <h2>3.2 Tabla Central: <code>apps</code></h2>
+        <div class="table-wrapper">
+            <table>
+                <thead>
+                    <tr><th>Campo</th><th>Tipo SQL</th><th>Restricción</th><th>Descripción</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td><code>id</code></td><td>INTEGER</td><td>PK, AUTOINCREMENT</td><td>Identificador interno</td></tr>
+                    <tr><td><code>project_id</code></td><td>INTEGER</td><td>FK → projects.id</td><td>Vínculo opcional a proyecto</td></tr>
+                    <tr><td><code>name</code></td><td>TEXT</td><td>NOT NULL</td><td>Nombre comercial de la app</td></tr>
+                    <tr><td><code>app_id</code></td><td>TEXT</td><td>UNIQUE, NOT NULL</td><td>Secreto compartido (Bundle ID)</td></tr>
+                    <tr><td><code>token</code></td><td>TEXT</td><td>UNIQUE, NOT NULL</td><td>KDN token de acceso</td></tr>
+                    <tr><td><code>old_token</code></td><td>TEXT</td><td>NULLABLE</td><td>Token anterior (rotación)</td></tr>
+                    <tr><td><code>status</code></td><td>TEXT</td><td>CHECK (active/inactive/paused/archived)</td><td>Estado operativo</td></tr>
+                    <tr><td><code>created_at</code></td><td>TIMESTAMP</td><td>DEFAULT CURRENT_TIMESTAMP</td><td>Momento de registro</td></tr>
+                    <tr><td><code>updated_at</code></td><td>TIMESTAMP</td><td>DEFAULT CURRENT_TIMESTAMP</td><td>Última modificación</td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- 3.3 Estados -->
+        <h3>3.2.1 Máquina de Estados de una App</h3>
+        <div class="mermaid-wrapper">
+            <div class="mermaid">
+stateDiagram-v2
+    [*] --> Active: Auto-registro
+    Active --> Inactive: Admin toggle
+    Active --> Paused: Admin toggle
+    Active --> Archived: Soft delete
+    Inactive --> Active: Admin toggle
+    Paused --> Active: Admin toggle
+    Active --> Rotating: Rotar token
+    Rotating --> Active: Nuevo token + old_token
+            </div>
+            <p class="fig-caption">Figura 3.2 — Máquina de estados del ciclo de vida de una aplicación.</p>
+        </div>
+
+        <!-- 3.4 Cardinalidad -->
+        <h2>3.3 Cardinalidad Detallada</h2>
+        <div class="mermaid-wrapper">
+            <div class="mermaid">
+graph TB
+    P["projects: id PK"]
+    A["apps: id PK<br/>app_id UK<br/>token UK"]
+    S["app_services: id PK<br/>api_key<br/>priority"]
+    C["ai_catalog: id PK<br/>provider<br/>protocol"]
+    L["logs: id PK<br/>tokens_in/tokens_out<br/>latency"]
+    T["translations: id PK<br/>key/value/locale"]
+
+    P -->|"1:N"| A
+    A -->|"1:N"| S
+    C -->|"1:N"| S
+    A -->|"1:N"| L
+    A -->|"1:N"| T
+            </div>
+            <p class="fig-caption">Figura 3.3 — Cardinalidad de todas las relaciones del sistema.</p>
+        </div>
+
+        <!-- 3.4 Ejemplos de Datos -->
+        <h2>3.4 Ejemplos de Datos</h2>
+        <h3>ai_catalog — Catálogo de Modelos</h3>
+        <div class="table-wrapper">
+            <table>
+                <thead>
+                    <tr><th>id</th><th>provider</th><th>name</th><th>identifier</th><th>protocol</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td>1</td><td>GOOGLE</td><td>Gemini 2.0 Flash</td><td>gemini-2.0-flash</td><td>gemini-v1</td></tr>
+                    <tr><td>2</td><td>GOOGLE</td><td>Gemini 1.5 Pro</td><td>gemini-1.5-pro</td><td>gemini-v1</td></tr>
+                    <tr><td>3</td><td>OPENAI</td><td>GPT-4o Mini</td><td>gpt-4o-mini</td><td>openai-v1</td></tr>
+                    <tr><td>4</td><td>NVIDIA</td><td>Llama 3.1 8B</td><td>meta/llama-3.1-8b-instruct</td><td>openai-v1</td></tr>
+                    <tr><td>5</td><td>GROQ</td><td>Mixtral 8x7B</td><td>mixtral-8x7b-32768</td><td>openai-v1</td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <h3>settings — Configuración Global</h3>
+        <div class="table-wrapper">
+            <table>
+                <thead>
+                    <tr><th>key</th><th>value</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td><code>admin_password</code></td><td><code>$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/...</code></td></tr>
+                    <tr><td><code>hub_name</code></td><td><code>KodanHUB Production</code></td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- 3.5 Crecimiento Proyectado -->
+        <h2>3.5 Proyección de Crecimiento</h2>
+        <div class="table-wrapper">
+            <table>
+                <thead>
+                    <tr><th>Tabla</th><th>Tamaño/registro</th><th>Crecimiento mensual</th><th>Proyección 12 meses</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td>apps</td><td>~512 bytes</td><td>+5 apps</td><td>~60 apps (~30 KB)</td></tr>
+                    <tr><td>ai_catalog</td><td>~256 bytes</td><td>+2 modelos</td><td>~24 modelos (~6 KB)</td></tr>
+                    <tr><td>app_services</td><td>~128 bytes</td><td>+15 servicios</td><td>~180 servicios (~23 KB)</td></tr>
+                    <tr><td>logs</td><td>~192 bytes</td><td>+15,000 registros</td><td>~180,000 registros (~34 MB)</td></tr>
+                    <tr><td>translations</td><td>~512 bytes</td><td>+1,000 claves</td><td>~12,000 claves (~6 MB)</td></tr>
+                </tbody>
+            </table>
+        </div>
+
+    </div>
+</section>
+
+<!-- ================================================================ -->
+<!-- WHITE PAPER 04: INTERACCIÓN DE APIs                               -->
+<!-- ================================================================ -->
+<section id="wp4" class="wp-section">
+    <div class="container">
+
+        <span class="badge badge-purple">WP-04</span>
+        <h1>Diagramas de Interacción de APIs</h1>
+        <p>Secuencias de handshake, proxy IA, failover, traducción de protocolo y CORS.</p>
+        <div class="keyline"></div>
+
+        <!-- 4.1 Handshake Secuencia -->
+        <h2>4.1 Secuencia de Handshake</h2>
+        <div class="mermaid-wrapper">
+            <div class="mermaid">
+sequenceDiagram
+    participant C as App Cliente
+    participant H as KodanHUB
+    participant S as SQLite DB
+
+    C->>H: POST / Body vacio
+    C->>H: X-KODAN-APP-ID: SC-MASTER-8DAC5...
+
+    H->>S: SELECT * FROM apps WHERE app_id = ?
+
+    alt App NO Existe
+        S-->>H: 0 rows
+        H->>H: Generar KDN-...
+        H->>S: INSERT INTO apps (token, status)
+        H-->>C: 200 {new_kodan_token: KDN-...}
+    else App Existe
+        S-->>H: app record
+        alt status = active
+            H-->>C: 200 {new_kodan_token: existing}
+        else status != active
+            H-->>C: 403 App inactiva
+        end
+    end
+            </div>
+            <p class="fig-caption">Figura 4.1 — Secuencia de handshake con auto-registro y recuperación.</p>
+        </div>
+
+        <!-- 4.2 Proxy IA -->
+        <h2>4.2 Secuencia de Proxy IA con Traducción</h2>
+        <div class="mermaid-wrapper">
+            <div class="mermaid">
+sequenceDiagram
+    participant C as App Cliente
+    participant H as KodanHUB
+    participant P as Proxy
+    participant AI as Proveedor IA
+
+    C->>H: POST / action:ai
+    C->>H: X-KODAN-TOKEN: KDN-...
+
+    Note over H: 1. Validar Token en DB
+    Note over H: 2. Verificar action = 'ai'
+    Note over H: 3. Cargar servicios JOIN
+
+    H->>P: generateContent()
+    Note over P: Traducir payload
+    P->>AI: POST con API Key
+
+    AI-->>P: Response + usage
+    P-->>H: {status, response, data}
+
+    Note over H: 4. LogService.save()
+    Note over H: 5. Extraer tokens
+
+    H-->>C: 200 {response, usage, hub_model}
+            </div>
+            <p class="fig-caption">Figura 4.2 — Secuencia de proxy IA con traducción de protocolo y auditoría.</p>
+        </div>
+
+        <!-- 4.3 Failover -->
+        <h2>4.3 Secuencia de Failover</h2>
+        <div class="mermaid-wrapper">
+            <div class="mermaid">
+sequenceDiagram
+    participant C as App Cliente
+    participant H as KodanHUB
+    participant G as Gemini Prio 1
+    participant O as GPT-4o Prio 2
+
+    C->>H: Request IA
+
+    rect rgb(80,40,40)
+        H->>G: Intento 1 Gemini
+        G-->>H: HTTP 429 Overloaded
+        H->>H: Log error, latency 3.2s
+    end
+
+    rect rgb(60,80,40)
+        H->>O: Intento 2 GPT-4o Mini
+        O-->>H: HTTP 200 OK
+        H->>H: Log success, latency 1.8s
+        H-->>C: 200 Response exitosa
+    end
+            </div>
+            <p class="fig-caption">Figura 4.3 — Failover: Gemini falla (429), GPT-4o Mini responde exitosamente.</p>
+        </div>
+
+        <!-- 4.4 Traducción -->
+        <h2>4.4 Secuencia de Traducción OpenAI → Gemini</h2>
+        <div class="mermaid-wrapper">
+            <div class="mermaid">
+sequenceDiagram
+    participant H as KodanHUB
+    participant GP as GeminiProxy
+    participant AI as Gemini API
+
+    H->>GP: payload con messages[]
+
+    Note over GP: roles: user -> user, assistant -> model
+    Note over GP: content string -> parts[].text
+    Note over GP: image_url -> inlineData
+
+    GP->>GP: Construir contents[]
+
+    GP->>AI: POST /v1/models/...:generateContent
+
+    AI-->>GP: Response
+
+    Note over GP: Extraer candidates[0].content.parts[0].text
+    Note over GP: Extraer usageMetadata
+
+    GP-->>H: {status, response, data}
+            </div>
+            <p class="fig-caption">Figura 4.4 — Traducción de formato OpenAI (messages) a Gemini (contents).</p>
+        </div>
+
+        <!-- 4.5 Traducción Gemini → OpenAI -->
+        <h2>4.5 Secuencia de Traducción Gemini → OpenAI</h2>
+        <div class="mermaid-wrapper">
+            <div class="mermaid">
+sequenceDiagram
+    participant H as KodanHUB
+    participant OP as OpenAIProxy
+    participant AI as OpenAI/NVIDIA/Groq
+
+    H->>OP: payload con contents[]
+
+    Note over OP: roles: user -> user, model -> assistant
+    Note over OP: parts[].text -> content string
+    Note over OP: inlineData -> image_url base64
+
+    OP->>OP: Si messages vacio -> inyectar dummy
+
+    OP->>AI: POST /v1/chat/completions
+    OP->>AI: Authorization: Bearer
+
+    AI-->>OP: Response
+
+    Note over OP: Extraer choices[0].message.content
+    Note over OP: Extraer usage
+
+    OP-->>H: {status, response, data}
+            </div>
+            <p class="fig-caption">Figura 4.5 — Traducción de Gemini (contents) a OpenAI (messages).</p>
+        </div>
+
+        <!-- 4.6 CORS -->
+        <h2>4.6 Secuencia CORS Preflight</h2>
+        <div class="mermaid-wrapper">
+            <div class="mermaid">
+sequenceDiagram
+    participant B as Navegador
+    participant H as KodanHUB
+
+    B->>H: OPTIONS /
+    B->>H: Origin: https://smartcook.kodan.software
+
+    H->>H: Validar origin con regex
+
+    alt Origin valido
+        H-->>B: 204 No Content
+        H-->>B: Access-Control-Allow-Origin: *
+        H-->>B: Allow-Methods: POST, OPTIONS
+        H-->>B: Allow-Headers: X-KODAN-TOKEN, X-KODAN-APP-ID
+    else Origin invalido
+        H-->>B: Sin CORS headers
+        Note over B: Bloqueado por navegador
+    end
+
+    B->>H: POST / (Request real)
+    H-->>B: 200 Response
+            </div>
+            <p class="fig-caption">Figura 4.6 — Secuencia CORS preflight con validación de origen.</p>
+        </div>
+
+        <!-- 4.7 Manejo de Errores -->
+        <h2>4.7 Manejo de Errores y Excepciones</h2>
+        <div class="mermaid-wrapper">
+            <div class="mermaid">
+sequenceDiagram
+    participant C as App Cliente
+    participant H as KodanHUB
+
+    Note over C,H: Escenario 1: Sin credenciales
+    C->>H: POST / sin headers
+    H-->>C: 401 App no autorizada
+
+    Note over C,H: Escenario 2: App inactiva
+    C->>H: Handshake con app inactive
+    H-->>C: 403 Handshake rechazado
+
+    Note over C,H: Escenario 3: Payload invalido
+    C->>H: action != ai
+    H-->>C: 400 Accion no valida
+
+    Note over C,H: Escenario 4: Sin servicios
+    C->>H: Token valido, sin app_services
+    H-->>C: 400 Sin servicios configurados
+
+    Note over C,H: Escenario 5: Error critico
+    C->>H: Request cualquiera
+    H->>H: Exception no capturada
+    H-->>C: 500 HUB CRITICAL: file, line
+            </div>
+            <p class="fig-caption">Figura 4.7 — Matriz de 5 escenarios de error con códigos HTTP y respuestas.</p>
+        </div>
+
+        <!-- 4.8 Rotación de Token -->
+        <h2>4.8 Rotación de Tokens</h2>
+        <div class="mermaid-wrapper">
+            <div class="mermaid">
+sequenceDiagram
+    participant A as Admin
+    participant Act as actions.php
+    participant S as SQLite
+    participant App as App Cliente
+    participant H as KodanHUB
+
+    A->>Act: rotate_token&id=42
+    Act->>S: UPDATE apps SET old_token=current, token=new
+    Act-->>A: Redirect
+
+    App->>H: Request con old_token
+    H->>S: SELECT WHERE old_token
+    S-->>H: 0 results
+    H-->>App: 401 Unauthorized
+
+    App->>App: Detectar 401 -> Re-handshake
+    App->>H: Handshake con App-ID
+    H-->>App: 200 {new_kodan_token: nuevo}
+
+    App->>H: Request con nuevo token
+    H-->>App: 200 OK
+            </div>
+            <p class="fig-caption">Figura 4.8 — Secuencia de rotación de token: admin → 401 → re-handshake → éxito.</p>
+        </div>
+
+        <!-- 4.9 Mapa de Endpoints -->
+        <h2>4.9 Mapa Completo de Endpoints</h2>
+        <div class="mermaid-wrapper">
+            <div class="mermaid">
+graph TB
+    subgraph "Publicos index.php"
+        POST["POST /<br/>Handshake o Proxy IA"]
+        OPT["OPTIONS /<br/>CORS Preflight"]
+    end
+    subgraph "Admin actions.php"
+        ADD["add_app"]
+        ROT["rotate_token"]
+        TOG["toggle_status"]
+        ARCH["delete_app"]
+        CAT["add_catalog_model"]
+        SVC["add_app_service"]
+        TEST["test_service_ajax"]
+        STAT["get_stats_ajax"]
+        CON["get_consumption_stats_ajax"]
+    end
+    subgraph "Proveedores IA"
+        GEM["Gemini API"]
+        OAI["OpenAI API"]
+        NIV["NVIDIA API"]
+        GRQ["Groq API"]
+    end
+    POST --> GEM & OAI & NIV & GRQ
+            </div>
+            <p class="fig-caption">Figura 4.9 — Mapa completo de endpoints públicos, administrativos y de proveedores.</p>
+        </div>
+
+    </div>
+</section>
+
+<!-- ========== FOOTER ========== -->
+<section style="padding: 3rem 2rem; text-align: center; border-top: 1px solid var(--border-color);">
+    <div class="container">
+        <div class="keyline" style="margin: 0 auto 2rem;"></div>
+        <p style="color: var(--text-muted); font-size: 0.9rem;">
+            <strong>KodanHUB</strong> — AI Gateway Centralizado · v1.0.49<br>
+            Antigravity Ecosystem · White Papers Técnicos · 2026
+        </p>
+        <p style="color: var(--text-muted); font-size: 0.8rem; margin-top: 1rem;">
+            Generado con Mermaid.js · Exportable a PDF desde el navegador (Ctrl+P)
+        </p>
+    </div>
+</section>
+
+<a href="#" class="back-to-top no-print" title="Volver arriba">↑</a>
+
+</body>
+</html>

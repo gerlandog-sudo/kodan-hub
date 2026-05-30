@@ -197,6 +197,7 @@ try {
 
         case 'edit_app_service':
             $db->update('app_services', [
+                'app_id' => $_POST['app_id'] ?? 0,
                 'catalog_id' => $_POST['catalog_id'] ?? 0,
                 'api_key' => $_POST['api_key'] ?? '',
                 'priority' => $_POST['priority'] ?? 1

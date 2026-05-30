@@ -1,0 +1,49 @@
+# Dependencias & Gestores de Paquetes
+node_modules/
+.pnpm-store/
+vendor/
+
+# Entornos de Ejecución & Compilaciones (Builds)
+dist/
+build/
+.next/
+out/
+ready_for_deploy/
+
+# Archivos de Bloqueo (Locks)
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+# Archivos Locales de Configuración & Secretos (.env)
+.env
+.env.*
+api/.env
+api/.env.*
+
+# Metadatos de Herramientas e IDEs
+.impeccable/
+.vscode/
+.idea/
+.DS_Store
+
+# Archivos Generados, Logs y Temporales
+**/*.min.js
+**/*.min.css
+**/*.map
+**/*.log
+api/error_log
+api/uploads/
+
+# Archivos Binarios, Multimedia y Comprimidos
+public/assets/
+**/*.png
+**/*.jpg
+**/*.jpeg
+**/*.gif
+**/*.svg
+**/*.ico
+**/*.mp4
+**/*.zip
+**/*.rar
+**/*.tar.gz

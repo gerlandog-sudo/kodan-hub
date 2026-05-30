@@ -712,7 +712,7 @@ try {
                                                 <button class="action-icon-btn" onclick="testService('${s.id}')" title="Probar Conexión Neural">
                                                     <i data-lucide="zap" style="width:14px;"></i>
                                                 </button>
-                                                <button class="action-icon-btn" onclick="openEditService('${s.id}', '${s.catalog_id}', '${s.api_key}', '${s.priority}')" title="Editar Asignación">
+                                                <button class="action-icon-btn" onclick="openEditService('${s.id}', '${s.app_id}', '${s.catalog_id}', '${s.api_key}', '${s.priority}')" title="Editar Asignación">
                                                     <i data-lucide="edit-3" style="width:14px;"></i>
                                                 </button>
                                                 <button class="action-icon-btn danger" onclick="deleteService('${s.id}')" title="Desvincular Servicio">
@@ -771,13 +771,14 @@ try {
             showModal('addCatalogModal');
         }
 
-        async function openEditService(id, catalogId, apiKey, priority) {
+        async function openEditService(id, appId, catalogId, apiKey, priority) {
             // Asegurar que el catálogo esté cargado antes de seleccionar
             await populateCatalogSelect();
-            
+
             document.querySelector('#addServiceModal [name="action"]').value = 'edit_app_service';
             const modal = document.getElementById('addServiceModal');
             modal.querySelector('h3').innerText = 'EDITAR ASIGNACIÓN DE IA';
+            modal.querySelector('[name="app_id"]').value = appId;
             modal.querySelector('[name="catalog_id"]').value = catalogId;
             modal.querySelector('[name="api_key"]').value = apiKey;
             modal.querySelector('[name="priority"]').value = priority;

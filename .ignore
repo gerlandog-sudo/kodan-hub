@@ -1,0 +1,8 @@
+node_modules/
+.git/
+.env/
+vendor/
+dist/
+build/
+.opencode/
+ready_for_deploy/
