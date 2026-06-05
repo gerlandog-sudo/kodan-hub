@@ -6,7 +6,15 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>kodanHUB | Neural Access</title>
     <link rel="icon" type="image/svg+xml" href="https://kodan.software/kodan-terminal.svg">
-    <link rel="stylesheet" href="css/modern-hub.css">
+    <script>
+        (function() {
+            var savedTheme = localStorage.getItem('kodanhub-theme');
+            if (savedTheme) {
+                document.documentElement.setAttribute('data-theme', savedTheme);
+            }
+        })();
+    </script>
+    <link rel="stylesheet" href="css/modern-hub.css?v=1.1.6">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
 </head>
@@ -17,7 +25,7 @@
                 <defs>
                     <filter id="neon-glow" x="-50%" y="-50%" width="200%" height="200%">
                         <feGaussianBlur in="SourceAlpha" stdDeviation="2" result="blur" />
-                        <feFlood flood-color="#00FFC2" flood-opacity="0.8" result="color" />
+                        <feFlood flood-color="var(--primary)" flood-opacity="0.8" result="color" />
                         <feComposite in="color" in2="blur" operator="in" result="glow" />
                         <feMerge>
                             <feMergeNode in="glow" />
@@ -25,10 +33,10 @@
                         </feMerge>
                     </filter>
                 </defs>
-                <path d="M 100.75 40 L 70.75 60 L 100.75 80" fill="none" stroke="#00FFC2" stroke-width="10" stroke-linecap="round" stroke-linejoin="round" filter="url(#neon-glow)" />
+                <path d="M 100.75 40 L 70.75 60 L 100.75 80" fill="none" stroke="var(--primary)" stroke-width="10" stroke-linecap="round" stroke-linejoin="round" filter="url(#neon-glow)" />
                 <text x="234.5" y="60" text-anchor="middle" dominant-baseline="middle" class="kodan-text">kodan</text>
-                <path d="M 384.25 30 L 368.25 90" fill="none" stroke="#00FFC2" stroke-width="10" stroke-linecap="round" filter="url(#neon-glow)" />
-                <path d="M 399.25 40 L 429.25 60 L 399.25 80" fill="none" stroke="#00FFC2" stroke-width="10" stroke-linecap="round" stroke-linejoin="round" filter="url(#neon-glow)" />
+                <path d="M 384.25 30 L 368.25 90" fill="none" stroke="var(--primary)" stroke-width="10" stroke-linecap="round" filter="url(#neon-glow)" />
+                <path d="M 399.25 40 L 429.25 60 L 399.25 80" fill="none" stroke="var(--primary)" stroke-width="10" stroke-linecap="round" stroke-linejoin="round" filter="url(#neon-glow)" />
             </svg>
         </div>
         
@@ -54,7 +62,7 @@
         </p>
     </div>
 
-    <script src="js/neural-ui.js"></script>
+    <script src="js/neural-ui.js?v=1.2.0"></script>
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             gsap.from('.login-card', {

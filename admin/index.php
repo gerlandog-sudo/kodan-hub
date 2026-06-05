@@ -16,6 +16,10 @@ try {
     $dbWrapper = Database::getInstance();
     $db = $dbWrapper->getDB();
     
+    // Cargar preferencia de tema
+    $themeSettings = $db->select('settings', ['value'], ['key' => 'theme_preference']);
+    $theme = !empty($themeSettings) ? $themeSettings[0]['value'] : 'dark';
+    
     // Estadísticas Globales
     $totalTokens = $db->query("SELECT SUM(tokens_in + tokens_out) FROM logs")->fetchColumn() ?: 0;
     $totalRequests = $db->query("SELECT COUNT(*) FROM logs")->fetchColumn() ?: 0;
@@ -54,13 +58,21 @@ try {
 }
 ?>
 <!DOCTYPE html>
-<html lang="es">
+<html lang="es" data-theme="<?php echo htmlspecialchars($theme); ?>">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>kodanHUB | Neural Access</title>
     <link rel="icon" type="image/svg+xml" href="https://kodan.software/kodan-terminal.svg">
-    <link rel="stylesheet" href="css/modern-hub.css?v=1.1.5">
+    <script>
+        (function() {
+            var savedTheme = localStorage.getItem('kodanhub-theme');
+            if (savedTheme) {
+                document.documentElement.setAttribute('data-theme', savedTheme);
+            }
+        })();
+    </script>
+    <link rel="stylesheet" href="css/modern-hub.css?v=1.2.0">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
 </head>
@@ -73,7 +85,7 @@ try {
                     <defs>
                         <filter id="neon-glow" x="-50%" y="-50%" width="200%" height="200%">
                             <feGaussianBlur in="SourceAlpha" stdDeviation="2" result="blur" />
-                            <feFlood flood-color="#00FFC2" flood-opacity="0.8" result="color" />
+                            <feFlood flood-color="var(--primary)" flood-opacity="0.8" result="color" />
                             <feComposite in="color" in2="blur" operator="in" result="glow" />
                             <feMerge>
                                 <feMergeNode in="glow" />
@@ -81,10 +93,10 @@ try {
                             </feMerge>
                         </filter>
                     </defs>
-                    <path d="M 100.75 40 L 70.75 60 L 100.75 80" fill="none" stroke="#00FFC2" stroke-width="10" stroke-linecap="round" stroke-linejoin="round" filter="url(#neon-glow)" />
+                    <path d="M 100.75 40 L 70.75 60 L 100.75 80" fill="none" stroke="var(--primary)" stroke-width="10" stroke-linecap="round" stroke-linejoin="round" filter="url(#neon-glow)" />
                     <text x="234.5" y="60" text-anchor="middle" dominant-baseline="middle" class="kodan-text">kodan</text>
-                    <path d="M 384.25 30 L 368.25 90" fill="none" stroke="#00FFC2" stroke-width="10" stroke-linecap="round" filter="url(#neon-glow)" />
-                    <path d="M 399.25 40 L 429.25 60 L 399.25 80" fill="none" stroke="#00FFC2" stroke-width="10" stroke-linecap="round" stroke-linejoin="round" filter="url(#neon-glow)" />
+                    <path d="M 384.25 30 L 368.25 90" fill="none" stroke="var(--primary)" stroke-width="10" stroke-linecap="round" filter="url(#neon-glow)" />
+                    <path d="M 399.25 40 L 429.25 60 L 399.25 80" fill="none" stroke="var(--primary)" stroke-width="10" stroke-linecap="round" stroke-linejoin="round" filter="url(#neon-glow)" />
                 </svg>
             </div>
 
@@ -354,19 +366,61 @@ try {
 
     <!-- MODALES -->
     <div id="configModal" class="modal-overlay">
-        <div class="modal-content">
-            <h3 style="margin-bottom: 1.5rem; font-weight: 700; color: var(--mint-neon);">Ajustes de Administrador</h3>
-            <form action="actions.php" method="POST">
-                <input type="hidden" name="action" value="update_password">
-                <div class="form-group">
-                    <label>Nueva Contraseña de Acceso</label>
-                    <input type="password" name="new_password" required placeholder="Ingresar nueva clave">
+        <div class="modal-content" style="max-width: 500px;">
+            <h3 style="margin-bottom: 1.5rem; font-weight: 700; color: var(--primary);">Ajustes de Administrador</h3>
+            
+            <!-- Pestañas de Ajustes -->
+            <div class="config-tabs">
+                <button type="button" class="config-tab-btn active" onclick="showConfigTab('config-appearance-tab', this)">
+                    <i data-lucide="palette" style="width:14px; margin-right:5px; vertical-align:middle;"></i>Apariencia
+                </button>
+                <button type="button" class="config-tab-btn" onclick="showConfigTab('config-security-tab', this)">
+                    <i data-lucide="lock" style="width:14px; margin-right:5px; vertical-align:middle;"></i>Seguridad
+                </button>
+            </div>
+
+            <!-- Sección de Apariencia -->
+            <div id="config-appearance-tab" class="config-tab-content">
+                <p style="font-size: 0.75rem; color: var(--on-surface-variant); margin-bottom: 1.5rem;">
+                    Selecciona el tema visual de la plataforma. El cambio es inmediato y se sincroniza con tu cuenta.
+                </p>
+                <div class="theme-selector">
+                    <div class="theme-card" data-value="dark">
+                        <div class="theme-dots">
+                            <div class="theme-dot theme-dot-primary"></div>
+                            <div class="theme-dot theme-dot-secondary"></div>
+                        </div>
+                        <div class="theme-card-title">Oscuro</div>
+                        <div class="theme-card-status">SELECCIONAR</div>
+                    </div>
+                    <div class="theme-card" data-value="light">
+                        <div class="theme-dots">
+                            <div class="theme-dot theme-dot-primary"></div>
+                            <div class="theme-dot theme-dot-secondary"></div>
+                        </div>
+                        <div class="theme-card-title">Claro</div>
+                        <div class="theme-card-status">SELECCIONAR</div>
+                    </div>
                 </div>
                 <div style="display: flex; gap: 10px; margin-top: 2rem;">
-                    <button type="submit" class="btn-neural" style="flex: 1;">Actualizar</button>
-                    <button type="button" class="btn-outline" style="flex: 1;" onclick="hideModal('configModal')">Cancelar</button>
+                    <button type="button" class="btn-outline" style="flex: 1;" onclick="hideModal('configModal')">Cerrar</button>
                 </div>
-            </form>
+            </div>
+
+            <!-- Sección de Seguridad -->
+            <div id="config-security-tab" class="config-tab-content" style="display: none;">
+                <form action="actions.php" method="POST">
+                    <input type="hidden" name="action" value="update_password">
+                    <div class="form-group">
+                        <label>Nueva Contraseña de Acceso</label>
+                        <input type="password" name="new_password" required placeholder="Ingresar nueva clave">
+                    </div>
+                    <div style="display: flex; gap: 10px; margin-top: 2rem;">
+                        <button type="submit" class="btn-neural" style="flex: 1;">Actualizar</button>
+                        <button type="button" class="btn-outline" style="flex: 1;" onclick="hideModal('configModal')">Cancelar</button>
+                    </div>
+                </form>
+            </div>
         </div>
     </div>
 
@@ -551,7 +605,7 @@ try {
 
     <div id="toast-container" style="position: fixed; top: 30px; right: 30px; z-index: 10000;"></div>
 
-    <script src="js/neural-ui.js?v=1.0.7"></script>
+    <script src="js/neural-ui.js?v=1.2.0"></script>
     <script>
         function showTab(tabId, btn) {
             document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));

@@ -373,6 +373,37 @@ try {
             }
             exit;
             break;
+
+        case 'update_theme':
+            header('Content-Type: application/json');
+            $newTheme = $_POST['theme'] ?? '';
+            if ($newTheme !== 'dark' && $newTheme !== 'light') {
+                echo json_encode(['status' => 'error', 'message' => 'Tema no válido']);
+                exit;
+            }
+            try {
+                $db->update('settings', ['value' => $newTheme], ['key' => 'theme_preference']);
+                echo json_encode(['status' => 'success', 'message' => 'Tema actualizado']);
+            } catch (\Exception $e) {
+                echo json_encode(['status' => 'error', 'message' => $e->getMessage()]);
+            }
+            exit;
+            break;
+
+        case 'update_password':
+            $newPassword = $_POST['new_password'] ?? '';
+            if (!empty($newPassword)) {
+                $hashed = password_hash($newPassword, PASSWORD_DEFAULT);
+                try {
+                    $db->update('settings', ['value' => $hashed], ['key' => 'admin_password']);
+                    redirectBack();
+                } catch (\Exception $e) {
+                    die("Error al actualizar la contraseña: " . $e->getMessage());
+                }
+            } else {
+                redirectBack('password_empty');
+            }
+            break;
     }
 } catch (\Exception $e) {
     die("Error en acción administrativa: " . $e->getMessage());

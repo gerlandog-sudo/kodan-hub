@@ -3,7 +3,73 @@
  * Animaciones y lógica de interfaz refinada.
  */
 
+const ThemeEngine = {
+    init() {
+        let theme = localStorage.getItem('kodanhub-theme');
+        if (!theme) {
+            theme = document.documentElement.getAttribute('data-theme') || 'dark';
+            localStorage.setItem('kodanhub-theme', theme);
+        } else {
+            document.documentElement.setAttribute('data-theme', theme);
+        }
+        this.updateActiveCard(theme);
+    },
+    set(theme) {
+        if (theme !== 'dark' && theme !== 'light') return;
+        
+        document.documentElement.setAttribute('data-theme', theme);
+        localStorage.setItem('kodanhub-theme', theme);
+        this.updateActiveCard(theme);
+
+        const formData = new FormData();
+        formData.append('action', 'update_theme');
+        formData.append('theme', theme);
+
+        fetch('actions.php', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                showToast('PREFERENCIA DE TEMA SINCRONIZADA', 'success');
+            } else {
+                console.error('Error al sincronizar tema:', data.message);
+            }
+        })
+        .catch(err => {
+            console.error('Error de red al sincronizar tema:', err);
+        });
+    },
+    get() {
+        return localStorage.getItem('kodanhub-theme') || 'dark';
+    },
+    updateActiveCard(theme) {
+        document.querySelectorAll('.theme-card').forEach(card => {
+            const statusEl = card.querySelector('.theme-card-status');
+            if (card.getAttribute('data-value') === theme) {
+                card.classList.add('active');
+                if (statusEl) statusEl.innerText = 'ACTIVO';
+            } else {
+                card.classList.remove('active');
+                if (statusEl) statusEl.innerText = 'SELECCIONAR';
+            }
+        });
+    }
+};
+
 document.addEventListener('DOMContentLoaded', () => {
+    // Inicializar ThemeEngine
+    ThemeEngine.init();
+
+    // Event listeners para las tarjetas de tema
+    document.querySelectorAll('.theme-card').forEach(card => {
+        card.addEventListener('click', () => {
+            const value = card.getAttribute('data-value');
+            ThemeEngine.set(value);
+        });
+    });
+
     // 1. Inicializar Lucide Icons
     if (typeof lucide !== 'undefined') {
         lucide.createIcons();
@@ -48,9 +114,12 @@ document.addEventListener('DOMContentLoaded', () => {
             { scale: 0.9, opacity: 0 }, 
             { scale: 1, opacity: 1, duration: 0.4, ease: "back.out(1.7)" }
         );
+        
+        // Obtener el color de fondo con transparencia desde CSS
+        const bgRgb = getComputedStyle(document.documentElement).getPropertyValue('--background-rgb') || '11, 19, 38';
         gsap.fromTo(modal, 
             { backgroundColor: 'rgba(0,0,0,0)' }, 
-            { backgroundColor: 'rgba(0,0,0,0.8)', duration: 0.4 }
+            { backgroundColor: `rgba(${bgRgb.trim()}, 0.8)`, duration: 0.4 }
         );
     };
 
@@ -68,6 +137,22 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
         gsap.to(modal, { backgroundColor: 'rgba(0,0,0,0)', duration: 0.3 });
+    };
+
+    // Pestañas internas del configModal
+    window.showConfigTab = (tabId, btn) => {
+        document.querySelectorAll('#configModal .config-tab-content').forEach(content => {
+            content.style.display = 'none';
+        });
+        document.querySelectorAll('#configModal .config-tab-btn').forEach(b => {
+            b.classList.remove('active');
+        });
+        
+        const activeContent = document.getElementById(tabId);
+        if (activeContent) {
+            activeContent.style.display = 'block';
+        }
+        btn.classList.add('active');
     };
 
     // 4. Copiar al Portapapeles con feedback visual
@@ -91,13 +176,13 @@ function showToast(message, type = 'info', duration = 4000) {
     
     const toast = document.createElement('div');
     toast.className = `toast toast-${type}`;
-    toast.style.background = '#0a0a0a';
-    toast.style.border = `1px solid ${type === 'success' ? '#00FFC2' : (type === 'error' ? '#ff4d4d' : 'rgba(255,255,255,0.2)')}`;
-    toast.style.color = type === 'success' ? '#00FFC2' : (type === 'error' ? '#ff4d4d' : '#fff');
+    toast.style.background = 'var(--surface-container-lowest)';
+    toast.style.border = `1px solid ${type === 'success' ? 'var(--primary)' : (type === 'error' ? 'var(--error)' : 'var(--outline-variant)')}`;
+    toast.style.color = type === 'success' ? 'var(--primary)' : (type === 'error' ? 'var(--error)' : 'var(--on-surface)');
     toast.style.padding = '1rem 2rem';
     toast.style.borderRadius = '12px';
     toast.style.marginBottom = '10px';
-    toast.style.boxShadow = '0 10px 40px rgba(0,0,0,0.9)';
+    toast.style.boxShadow = 'var(--card-shadow)';
     toast.style.display = 'flex';
     toast.style.alignItems = 'center';
     toast.style.justifyContent = 'space-between';
@@ -140,12 +225,6 @@ function closeToast(toast) {
     });
 }
 
-/**
- * Renderiza la barra de paginación dinámicamente
- * @param {string} containerId 
- * @param {object} meta Datos de paginación (page, total_pages, total, limit)
- * @param {function} onPageChange Función a llamar al cambiar de página
- */
 function renderPagination(containerId, meta, onPageChange) {
     const container = document.getElementById(containerId);
     if (!container || !meta || meta.total_pages <= 1) {
@@ -156,10 +235,8 @@ function renderPagination(containerId, meta, onPageChange) {
     container.style.display = 'flex';
     let buttonsHtml = '';
     
-    // Botón Anterior
     buttonsHtml += `<button class="page-btn" ${meta.page <= 1 ? 'disabled' : ''} onclick="window.${onPageChange.name}(${meta.page - 1})"><i data-lucide="chevron-left" style="width:14px;"></i></button>`;
 
-    // Lógica de números de página (TimeTracker style)
     const showMax = 5;
     if (meta.total_pages <= showMax) {
         for (let i = 1; i <= meta.total_pages; i++) {
@@ -180,7 +257,6 @@ function renderPagination(containerId, meta, onPageChange) {
         buttonsHtml += `<button class="page-btn ${meta.total_pages === meta.page ? 'active' : ''}" onclick="window.${onPageChange.name}(${meta.total_pages})">${meta.total_pages}</button>`;
     }
 
-    // Botón Siguiente
     buttonsHtml += `<button class="page-btn" ${meta.page >= meta.total_pages ? 'disabled' : ''} onclick="window.${onPageChange.name}(${meta.page + 1})"><i data-lucide="chevron-right" style="width:14px;"></i></button>`;
 
     container.innerHTML = `
